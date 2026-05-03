@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arsenal Cálculo 200 — Calculadora de Honorários</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+<!-- Tailwind config (DEVE vir antes do CDN) -->
+<script>
+  tailwind = { config: {
+    theme: {
+      extend: {
+        colors: {
+          'arsenal-bg':       '#070B0B',
+          'arsenal-surface':  '#0E1616',
+          'arsenal-surface2': '#142020',
+          'arsenal-border':   '#1E3030',
+          'arsenal-cyan':     '#2DFFD4',
+          'arsenal-cyan-dim': '#14998A',
+          'arsenal-text':     '#E6F7F2',
+          'arsenal-muted':    '#7A9994',
+          'arsenal-warning':  '#FFB84D',
+        },
+        fontFamily: {
+          'display': ['"Space Grotesk"', 'sans-serif'],
+          'sans':    ['Inter', 'system-ui', 'sans-serif'],
+        },
+        boxShadow: {
+          'glow':         '0 0 20px rgba(45, 255, 212, 0.25)',
+          'glow-strong':  '0 0 30px rgba(45, 255, 212, 0.45)',
+        }
+      }
+    }
+  }};
+</script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<!-- Bibliotecas para gerar o .docx (usando jsdelivr — mais permissivo p/ file://) -->
+<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+
+<style>
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: #070B0B;
+    background-image:
+      linear-gradient(rgba(45,255,212,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45,255,212,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    color: #E6F7F2;
+  }
+  .font-display { font-family: 'Space Grotesk', sans-serif; }
+  .glow-text { text-shadow: 0 0 20px rgba(45, 255, 212, 0.6); }
+
+  /* Toggle switch */
+  .toggle-track {
+    width: 2.75rem; height: 1.5rem;
+    background: #142020;
+    border: 1px solid #1E3030;
+    border-radius: 9999px;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: #7A9994;
+    border-radius: 9999px;
+    transition: all 0.2s;
+  }
+  input[type="checkbox"]:checked + .toggle-track {
+    background: #2DFFD4;
+    border-color: #2DFFD4;
+    box-shadow: 0 0 12px rgba(45,255,212,0.45);
+  }
+  input[type="checkbox"]:checked + .toggle-track::after {
+    transform: translateX(20px);
+    background: #070B0B;
+  }
+
+  /* Inputs */
+  .input-arsenal {
+    background: #142020;
+    border: 1px solid #1E3030;
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+    color: #E6F7F2;
+    width: 100%;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+  .input-arsenal:focus {
+    outline: none;
+    border-color: #2DFFD4;
+    box-shadow: 0 0 0 3px rgba(45,255,212,0.15);
+  }
+  .input-arsenal::placeholder { color: #4A6661; }
+
+  .label-arsenal {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #7A9994;
+    font-weight: 500;
+    margin-bottom: 0.375rem;
+    display: block;
+  }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.7) sepia(1) saturate(5) hue-rotate(120deg);
+    cursor: pointer;
+  }
+
+  /* Tooltip */
+  .tooltip-wrapper { position: relative; display: inline-flex; align-items: center; }
+  .tooltip-trigger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px; height: 18px;
+    border-radius: 9999px;
+    background: #142020;
+    border: 1px solid #14998A;
+    color: #14998A;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: help;
+    margin-left: 6px;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tooltip-trigger:hover { background: #2DFFD4; color: #070B0B; border-color: #2DFFD4; }
+  .tooltip-content {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    background: #0E1616;
+    border: 1px solid #2DFFD4;
+    color: #E6F7F2;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: normal;
+    line-height: 1.4;
+    width: 260px;
+    text-align: left;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    z-index: 50;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(45,255,212,0.15);
+  }
+  .tooltip-wrapper:hover .tooltip-content,
+  .tooltip-content.shown { opacity: 1; pointer-events: auto; }
+  /* Setinha do tooltip */
+  .tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 12px;
+    border: 6px solid transparent;
+    border-top-color: #2DFFD4;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .fade-in { animation: fadeIn 0.2s ease-out; }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
+
+  <!-- Header -->
+  <header class="mb-10">
+    <div class="text-arsenal-cyan-dim text-xs uppercase tracking-[0.3em] font-semibold mb-2">▸ Arsenal Cálculo 200</div>
+    <h1 class="font-display font-bold text-3xl md:text-5xl text-arsenal-text">
+      Calculadora de <span class="text-arsenal-cyan glow-text">Honorários</span>
+    </h1>
+    <p class="text-arsenal-muted mt-2 text-sm md:text-base">Preencha os dados do processo e gere a proposta em formato Word</p>
+    <div class="mt-6 h-px bg-gradient-to-r from-arsenal-cyan/40 via-arsenal-cyan/10 to-transparent"></div>
+  </header>
+
+  <!-- Layout -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+    <!-- COLUNA ESQUERDA -->
+    <div class="space-y-6">
+
+      <!-- Calculista -->
+      <section id="card-calculista" class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
+        <div id="calculista-expanded">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm">◆ Dados do Calculista</h2>
+            <span id="calc-saved-flag" class="hidden text-arsenal-cyan text-xs">✓ Salvo</span>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="label-arsenal" for="nome_calculista">Seu nome</label>
+              <input type="text" id="nome_calculista" class="input-arsenal" placeholder="Ex: João Silva">
+            </div>
+            <div>
+              <label class="label-arsenal" for="documento_calculista">Seu documento (CPF, CNPJ ou OAB)</label>
+              <input type="text" id="documento_calculista" class="input-arsenal" placeholder="Ex: 123.456.789-00">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="label-arsenal" for="qtd_calculos_feitos">Cálculos já feitos</label>
+                <input type="number" id="qtd_calculos_feitos" class="input-arsenal" min="0" step="1" placeholder="0">
+              </div>
+              <div class="flex flex-col justify-end">
+                <label class="label-arsenal">+10 nomeações?</label>
+                <label class="flex items-center gap-3 cursor-pointer pt-1">
+                  <input type="checkbox" id="mais_de_10_nomeacoes" class="sr-only">
+                  <span class="toggle-track"></span>
+                  <span class="text-sm text-arsenal-muted toggle-label">Não</span>
+                </label>
+              </div>
+            </div>
+
+            <button id="btn-salvar-calculista" class="w-full bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-cyan/40 hover:border-arsenal-cyan text-arsenal-cyan font-display font-bold uppercase tracking-wider text-sm py-3 rounded-lg transition">
+              💾 Salvar dados do calculista
+            </button>
+          </div>
+        </div>
+
+        <div id="calculista-collapsed" class="hidden items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-arsenal-cyan">✓</span>
+            <div>
+              <div class="text-arsenal-cyan-dim text-xs uppercase tracking-wider">Calculista</div>
+              <div id="calc-resumo-nome" class="font-medium"></div>
+            </div>
+          </div>
+          <button id="btn-editar-calculista" class="text-arsenal-cyan text-sm hover:underline">[editar]</button>
+        </div>
+      </section>
+
+      <!-- Processo -->
+      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
+        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Dados do Processo</h2>
+        <div class="space-y-4">
+
+          <div>
+            <label class="label-arsenal" for="numero_processo">Número do processo</label>
+            <input type="text" id="numero_processo" class="input-arsenal" placeholder="0010234-12.2024.5.02.0716">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="label-arsenal" for="reclamante">Reclamante</label>
+              <input type="text" id="reclamante" class="input-arsenal" placeholder="Nome do reclamante">
+            </div>
+            <div>
+              <label class="label-arsenal" for="reclamada">Reclamada</label>
+              <input type="text" id="reclamada" class="input-arsenal" placeholder="Nome da empresa">
+            </div>
+          </div>
+
+          <div>
+            <label class="label-arsenal" for="nome_advogado">Destinatário do orçamento</label>
+            <input type="text" id="nome_advogado" class="input-arsenal" placeholder="Dr. Fulano de Tal">
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="label-arsenal" for="representando">Representando</label>
+              <select id="representando" class="input-arsenal">
+                <option value="Reclamante">Reclamante</option>
+                <option value="Reclamada">Reclamada</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-arsenal" for="data_proposta">Data da proposta</label>
+              <input type="date" id="data_proposta" class="input-arsenal">
+            </div>
+          </div>
+
+          <div class="h-px bg-arsenal-border my-2"></div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="label-arsenal" for="anos_contrato">Anos de contrato</label>
+              <input type="number" id="anos_contrato" class="input-arsenal" min="0" step="1" placeholder="0">
+            </div>
+            <div>
+              <label class="label-arsenal" for="maior_remuneracao">Maior remuneração TRCT (R$)</label>
+              <input type="number" id="maior_remuneracao" class="input-arsenal" min="0" step="0.01" placeholder="0,00">
+            </div>
+          </div>
+
+          <div class="space-y-3 pt-2">
+
+            <!-- Urgência -->
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                É urgente? <span class="text-arsenal-muted ml-1">(≤ 2 dias úteis)</span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="urgente" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <!-- NOVO: Verbas indenizatórias e rescisórias (não altera valor) -->
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Verbas indenizatórias e rescisórias
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Indenização por danos morais, FGTS + 40%, verbas rescisórias e multas. Item básico — incluído sem alterar o valor.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="verbas_indenizatorias" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Apuração de verbas do contrato
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Verbas devidas mês a mês como diferença salarial, adicionais de periculosidade e insalubridade, comissões.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="apuracao_verbas" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Horas extras
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Apuração de verbas devidas pela jornada extraordinária.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="horas_extras" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Pensionamento vitalício
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Verbas devidas por pensionamento em caso de acidente.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="pensionamento_vitalicio" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Digitação de cartões de ponto
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Necessidade de digitação manual de cartões de ponto.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="digitacao_cartoes_ponto" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+
+            <label class="flex items-center justify-between cursor-pointer">
+              <span class="text-sm flex items-center">
+                Digitação de contracheques
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-trigger" tabindex="0">?</span>
+                  <span class="tooltip-content">Necessidade de digitação manual de verbas do contracheque.</span>
+                </span>
+              </span>
+              <span class="flex items-center gap-3">
+                <input type="checkbox" id="digitacao_contracheques" class="sr-only">
+                <span class="toggle-track"></span>
+              </span>
+            </label>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- COLUNA DIREITA -->
+    <div class="space-y-6 lg:sticky lg:top-6 lg:self-start">
+
+      <!-- Resumo -->
+      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
+        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-5">◆ Resumo do Cálculo</h2>
+
+        <div id="breakdown" class="space-y-2.5 text-sm tabular-nums"></div>
+
+        <div class="mt-5 pt-5 border-t-2 border-arsenal-border">
+          <div class="text-arsenal-muted uppercase text-xs tracking-wider mb-1">Total</div>
+          <div id="total-display" class="font-display font-bold text-4xl md:text-5xl text-arsenal-cyan glow-text tabular-nums">
+            R$ 0,00
+          </div>
+          <div id="aviso-override" class="hidden mt-2 text-xs text-arsenal-warning">
+            ⚠ Valor ajustado manualmente — original: <span id="valor-original-display"></span>
+          </div>
+        </div>
+
+        <!-- Override manual -->
+        <div class="mt-4">
+          <button id="btn-toggle-override" class="text-arsenal-cyan text-xs hover:underline">
+            ✎ Editar valor manualmente
+          </button>
+          <div id="override-section" class="hidden mt-3 fade-in">
+            <label class="label-arsenal">Valor final (R$) — pode usar vírgula ou ponto</label>
+            <div class="flex gap-2">
+              <input type="text" id="valor_override" class="input-arsenal tabular-nums" inputmode="decimal" placeholder="2.940,00">
+              <button id="btn-resetar-override" class="px-3 py-2 text-xs text-arsenal-muted hover:text-arsenal-cyan border border-arsenal-border rounded-lg whitespace-nowrap">Resetar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 space-y-2">
+          <button id="btn-gerar" class="w-full bg-arsenal-cyan hover:bg-arsenal-cyan/90 text-arsenal-bg font-display font-bold uppercase tracking-wider px-6 py-4 rounded-lg shadow-glow hover:shadow-glow-strong transition disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
+            📥 Gerar Proposta .docx
+          </button>
+          <div id="aviso-validacao" class="hidden text-xs text-arsenal-warning">
+            Preencha os campos obrigatórios antes de gerar.
+          </div>
+          <div id="erro-geracao" class="hidden text-xs text-arsenal-warning bg-arsenal-warning/10 border border-arsenal-warning/40 rounded p-2"></div>
+          <button id="btn-copiar-link" class="w-full bg-transparent border border-arsenal-border hover:border-arsenal-cyan text-arsenal-muted hover:text-arsenal-cyan text-sm py-2.5 rounded-lg transition">
+            🔗 Copiar link da proposta
+          </button>
+        </div>
+      </section>
+
+      <!-- Histórico -->
+      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
+        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Histórico (últimas 10)</h2>
+        <div id="historico-lista" class="space-y-2 text-sm">
+          <div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div id="toast" class="hidden fixed bottom-6 right-6 bg-arsenal-cyan text-arsenal-bg font-bold px-5 py-3 rounded-lg shadow-glow-strong text-sm fade-in z-50"></div>
+
+  <footer class="mt-12 pt-8 border-t border-arsenal-border text-arsenal-muted text-xs text-center">
+    <p>Seus dados ficam apenas no seu navegador. Nenhuma informação é enviada a servidores.</p>
+    <p class="mt-1">A chave PIX deve ser preenchida manualmente no Word após gerar a proposta.</p>
+  </footer>
+</div>
+
+<script>
+// =========================================================================
+// LÓGICA DE CÁLCULO
+// =========================================================================
+
+function valorBase(qtdCalculos) {
+  const q = Number(qtdCalculos) || 0;
+  if (q <= 50) return 200;
+  if (q <= 100) return 400;
+  return 600;
+}
+
+function faixaRemuneracao(valor, base) {
+  const v = Number(valor) || 0;
+  if (v <= 3500) return 0;
+  if (v <= 5000) return base * 0.5;
+  if (v <= 10000) return base;
+  return base * 2;
+}
+
+function calcular(inputs) {
+  const base = valorBase(inputs.qtd_calculos_feitos);
+  const anos = Number(inputs.anos_contrato) || 0;
+
+  const itens = [
+    { label: "Valor base dos cálculos", valor: base, sempre: true },
+    { label: "+10 nomeações (70% do base)",
+      valor: inputs.mais_de_10_nomeacoes ? base * 0.7 : 0 },
+    { label: "Urgência ≤ 2 dias úteis (50% do base)",
+      valor: inputs.urgente ? base * 0.5 : 0 },
+    { label: "Maior remuneração (TRCT)",
+      valor: faixaRemuneracao(inputs.maior_remuneracao, base) },
+    // Verbas indenizatórias: não altera valor — só aparece no breakdown como "incluído"
+    { label: "Verbas indenizatórias e rescisórias",
+      valor: 0,
+      incluido: !!inputs.verbas_indenizatorias },
+    { label: "Apuração de verbas (20% do base)",
+      valor: inputs.apuracao_verbas ? base * 0.2 : 0 },
+    { label: "Horas extras (50% do base)",
+      valor: inputs.horas_extras ? base * 0.5 : 0 },
+    { label: "Pensionamento vitalício (50% do base)",
+      valor: inputs.pensionamento_vitalicio ? base * 0.5 : 0 },
+    { label: "Digitação de cartões de ponto",
+      valor: inputs.digitacao_cartoes_ponto ? (base / 5) * anos : 0 },
+    { label: "Digitação de contracheques",
+      valor: inputs.digitacao_contracheques ? (base / 10) * anos : 0 },
+  ];
+
+  const total = itens.reduce((s, i) => s + i.valor, 0);
+  return { itens, total };
+}
+
+// =========================================================================
+// HELPERS
+// =========================================================================
+
+const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const fmtBRLNum = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtDataExtenso = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+const $ = (id) => document.getElementById(id);
+
+// Parser robusto BR — aceita "2940", "2940,00", "2.940,00", "2,940.00", "R$ 2.940,00"
+function parseValorBR(str) {
+  if (str === null || str === undefined) return null;
+  let s = String(str).trim().replace(/[^\d,\.\-]/g, '');
+  if (!s) return null;
+  const ultVirg = s.lastIndexOf(',');
+  const ultPonto = s.lastIndexOf('.');
+  if (ultVirg > -1 && ultVirg > ultPonto) {
+    // Decimal é vírgula (formato BR): pontos são milhar
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else if (ultPonto > -1 && ultPonto > ultVirg) {
+    // Decimal é ponto (formato US): vírgulas são milhar
+    s = s.replace(/,/g, '');
+  }
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+}
+
+const CAMPOS_CALCULISTA = ['nome_calculista', 'documento_calculista', 'qtd_calculos_feitos', 'mais_de_10_nomeacoes'];
+const CAMPOS_PROCESSO = [
+  'numero_processo', 'reclamante', 'reclamada', 'nome_advogado', 'representando',
+  'data_proposta', 'urgente', 'verbas_indenizatorias', 'anos_contrato', 'maior_remuneracao',
+  'apuracao_verbas', 'horas_extras', 'pensionamento_vitalicio',
+  'digitacao_cartoes_ponto', 'digitacao_contracheques'
+];
+
+function lerCampo(id) {
+  const el = $(id);
+  if (!el) return null;
+  if (el.type === 'checkbox') return el.checked;
+  if (el.type === 'number') return el.value === '' ? 0 : Number(el.value);
+  return el.value;
+}
+
+function escreverCampo(id, valor) {
+  const el = $(id);
+  if (!el) return;
+  if (el.type === 'checkbox') el.checked = !!valor;
+  else el.value = valor ?? '';
+}
+
+function lerInputsCalculista() {
+  const obj = {};
+  CAMPOS_CALCULISTA.forEach(id => obj[id] = lerCampo(id));
+  return obj;
+}
+
+function lerInputsProcesso() {
+  const obj = {};
+  CAMPOS_PROCESSO.forEach(id => obj[id] = lerCampo(id));
+  return obj;
+}
+
+function lerTodosInputs() {
+  return { ...lerInputsCalculista(), ...lerInputsProcesso() };
+}
+
+let valorOverride = null;
+
+// =========================================================================
+// RENDER DO RESUMO
+// =========================================================================
+
+function atualizarResumo() {
+  const inputs = lerTodosInputs();
+  const { itens, total } = calcular(inputs);
+
+  const html = itens.map(i => {
+    if (i.incluido === true) {
+      return `
+        <div class="flex justify-between items-baseline text-arsenal-cyan-dim">
+          <span class="text-xs uppercase tracking-wide">${i.label}</span>
+          <span class="font-medium text-xs italic">incluído</span>
+        </div>`;
+    }
+    if (i.incluido === false) {
+      return `
+        <div class="flex justify-between items-baseline text-arsenal-muted">
+          <span class="text-xs uppercase tracking-wide">${i.label}</span>
+          <span class="font-medium">—</span>
+        </div>`;
+    }
+    const zerado = i.valor === 0;
+    const cor = zerado ? 'text-arsenal-muted' : 'text-arsenal-text';
+    const valorFmt = zerado ? '—' : fmtBRL.format(i.valor);
+    return `
+      <div class="flex justify-between items-baseline ${cor}">
+        <span class="text-xs uppercase tracking-wide">${i.label}</span>
+        <span class="font-medium">${valorFmt}</span>
+      </div>`;
+  }).join('');
+  $('breakdown').innerHTML = html;
+
+  let totalExibir = total;
+  if (valorOverride !== null) {
+    totalExibir = valorOverride;
+    $('aviso-override').classList.remove('hidden');
+    $('valor-original-display').textContent = fmtBRL.format(total);
+  } else {
+    $('aviso-override').classList.add('hidden');
+  }
+  $('total-display').textContent = fmtBRL.format(totalExibir);
+
+  document.querySelectorAll('.toggle-label').forEach(span => {
+    const cb = span.closest('label').querySelector('input[type="checkbox"]');
+    if (cb) span.textContent = cb.checked ? 'Sim' : 'Não';
+  });
+
+  validarFormulario();
+}
+
+function validarFormulario() {
+  const c = lerInputsCalculista();
+  const p = lerInputsProcesso();
+  const ok = (
+    c.nome_calculista && c.nome_calculista.trim() &&
+    c.documento_calculista && c.documento_calculista.trim() &&
+    c.qtd_calculos_feitos >= 0 &&
+    p.numero_processo && p.numero_processo.trim() &&
+    p.reclamante && p.reclamante.trim() &&
+    p.reclamada && p.reclamada.trim() &&
+    p.nome_advogado && p.nome_advogado.trim() &&
+    p.anos_contrato > 0 &&
+    p.maior_remuneracao > 0 &&
+    p.data_proposta
+  );
+  $('btn-gerar').disabled = !ok;
+  $('aviso-validacao').classList.toggle('hidden', ok);
+}
+
+// =========================================================================
+// LOCALSTORAGE
+// =========================================================================
+
+const KEY_CALC = 'arsenal_calculista_v1';
+const KEY_HIST = 'arsenal_historico_v1';
+
+function salvarCalculista() {
+  const dados = lerInputsCalculista();
+  if (!dados.nome_calculista || !dados.documento_calculista) {
+    showToast('Preencha nome e documento antes de salvar.', 'warning');
+    return;
+  }
+  try {
+    localStorage.setItem(KEY_CALC, JSON.stringify(dados));
+    showToast('✓ Dados do calculista salvos no navegador');
+    recolherCalculista();
+  } catch (e) {
+    showToast('Não consegui salvar (localStorage bloqueado).', 'warning');
+  }
+}
+
+function carregarCalculista() {
+  try {
+    const raw = localStorage.getItem(KEY_CALC);
+    if (!raw) return;
+    const dados = JSON.parse(raw);
+    CAMPOS_CALCULISTA.forEach(id => escreverCampo(id, dados[id]));
+    if (dados.nome_calculista) recolherCalculista();
+  } catch (e) { console.warn('Erro ao ler calculista:', e); }
+}
+
+function recolherCalculista() {
+  const nome = lerCampo('nome_calculista');
+  if (!nome) return;
+  $('calc-resumo-nome').textContent = nome;
+  $('calculista-expanded').classList.add('hidden');
+  $('calculista-collapsed').classList.remove('hidden');
+  $('calculista-collapsed').classList.add('flex');
+}
+
+function expandirCalculista() {
+  $('calculista-expanded').classList.remove('hidden');
+  $('calculista-collapsed').classList.add('hidden');
+  $('calculista-collapsed').classList.remove('flex');
+}
+
+function salvarNoHistorico(dadosCompletos, valorFinal) {
+  let hist = [];
+  try {
+    const raw = localStorage.getItem(KEY_HIST);
+    if (raw) hist = JSON.parse(raw);
+  } catch (e) { hist = []; }
+  hist.unshift({
+    timestamp: Date.now(),
+    data_str: new Date().toLocaleDateString('pt-BR'),
+    reclamante: dadosCompletos.reclamante,
+    reclamada: dadosCompletos.reclamada,
+    valor: valorFinal,
+    dados_completos: dadosCompletos
+  });
+  hist = hist.slice(0, 10);
+  try {
+    localStorage.setItem(KEY_HIST, JSON.stringify(hist));
+  } catch (e) {}
+  renderHistorico();
+}
+
+function renderHistorico() {
+  let hist = [];
+  try {
+    const raw = localStorage.getItem(KEY_HIST);
+    if (raw) hist = JSON.parse(raw);
+  } catch (e) { hist = []; }
+  if (hist.length === 0) {
+    $('historico-lista').innerHTML = '<div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>';
+    return;
+  }
+  $('historico-lista').innerHTML = hist.map((h, idx) => `
+    <button data-idx="${idx}" class="hist-item w-full text-left bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-border hover:border-arsenal-cyan/40 rounded-lg p-3 transition">
+      <div class="flex justify-between items-baseline">
+        <div class="text-arsenal-muted text-xs">${h.data_str}</div>
+        <div class="text-arsenal-cyan font-bold tabular-nums text-sm">${fmtBRL.format(h.valor)}</div>
+      </div>
+      <div class="text-arsenal-text text-sm mt-1 truncate">${h.reclamante || '—'} <span class="text-arsenal-muted">vs</span> ${h.reclamada || '—'}</div>
+    </button>
+  `).join('');
+  document.querySelectorAll('.hist-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.dataset.idx);
+      const item = hist[idx];
+      if (item && item.dados_completos) {
+        repopularDoHistorico(item.dados_completos);
+        showToast('✓ Dados carregados do histórico');
+      }
+    });
+  });
+}
+
+function repopularDoHistorico(dados) {
+  CAMPOS_PROCESSO.forEach(id => {
+    if (dados[id] !== undefined) escreverCampo(id, dados[id]);
+  });
+  valorOverride = null;
+  $('valor_override').value = '';
+  $('override-section').classList.add('hidden');
+  atualizarResumo();
+}
+
+// =========================================================================
+// LINK COMPARTILHÁVEL
+// =========================================================================
+
+function gerarLink() {
+  const dados = lerInputsProcesso();
+  const json = JSON.stringify(dados);
+  const b64 = btoa(unescape(encodeURIComponent(json)));
+  const url = `${location.origin}${location.pathname}?d=${b64}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(
+      () => showToast('🔗 Link copiado'),
+      () => prompt('Copie o link manualmente:', url)
+    );
+  } else {
+    prompt('Copie o link manualmente:', url);
+  }
+}
+
+function carregarDeURL() {
+  const params = new URLSearchParams(location.search);
+  const d = params.get('d');
+  if (!d) return;
+  try {
+    const json = decodeURIComponent(escape(atob(d)));
+    const dados = JSON.parse(json);
+    CAMPOS_PROCESSO.forEach(id => {
+      if (dados[id] !== undefined) escreverCampo(id, dados[id]);
+    });
+  } catch (e) { console.warn('Erro ao decodificar link:', e); }
+}
+
+// =========================================================================
+// CARREGAMENTO DO TEMPLATE
+// =========================================================================
+
+async function carregarBufferTemplate() {
+  // Modo standalone: usa base64 embutido se a constante existir
+  if (typeof TEMPLATE_DOCX_BASE64 !== 'undefined') {
+    const binaryString = atob(TEMPLATE_DOCX_BASE64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+    return bytes;
+  }
+  // Modo produção: faz fetch do template.docx ao lado do index.html
+  const response = await fetch('template.docx');
+  if (!response.ok) {
+    throw new Error('Não consegui carregar o template.docx (HTTP ' + response.status + ')');
+  }
+  const buffer = await response.arrayBuffer();
+  return new Uint8Array(buffer);
+}
+
+// =========================================================================
+// GERAÇÃO DO .DOCX
+// =========================================================================
+
+async function gerarDocx() {
+  $('erro-geracao').classList.add('hidden');
+
+  // Verificar libs
+  if (typeof PizZip === 'undefined') {
+    mostrarErro('Biblioteca PizZip não carregou. Verifique sua conexão com a internet (precisa de internet só pra primeiro carregamento).');
+    return;
+  }
+  if (typeof docxtemplater === 'undefined') {
+    mostrarErro('Biblioteca docxtemplater não carregou. Verifique sua conexão com a internet.');
+    return;
+  }
+  if (typeof saveAs === 'undefined') {
+    mostrarErro('Biblioteca FileSaver não carregou. Verifique sua conexão com a internet.');
+    return;
+  }
+
+  const inputs = lerTodosInputs();
+  const { total } = calcular(inputs);
+  const valorFinal = valorOverride !== null ? valorOverride : total;
+
+  // Data por extenso
+  let dataExtenso = '';
+  if (inputs.data_proposta) {
+    const [ano, mes, dia] = inputs.data_proposta.split('-').map(Number);
+    if (ano && mes && dia) {
+      const d = new Date(ano, mes - 1, dia);
+      dataExtenso = fmtDataExtenso.format(d);
+    }
+  }
+
+  const dados = {
+    numero_processo: inputs.numero_processo || '',
+    reclamante: inputs.reclamante || '',
+    reclamada: inputs.reclamada || '',
+    nome_advogado: inputs.nome_advogado || '',
+    representando: inputs.representando || 'Reclamante',
+    valor_consultoria: fmtBRLNum.format(valorFinal),
+    data_proposta: dataExtenso,
+    nome_calculista: inputs.nome_calculista || '',
+    documento_calculista: inputs.documento_calculista || '',
+  };
+
+  try {
+    const bytes = await carregarBufferTemplate();
+    const zip = new PizZip(bytes);
+    const doc = new docxtemplater(zip, {
+      paragraphLoop: true,
+      linebreaks: true,
+      delimiters: { start: '{', end: '}' }
+    });
+    doc.render(dados);
+    const blob = doc.getZip().generate({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+    const filename = `Proposta - ${inputs.reclamante} vs ${inputs.reclamada}.docx`;
+    saveAs(blob, filename);
+    salvarNoHistorico(inputs, valorFinal);
+    showToast('✓ Proposta gerada — valor: ' + fmtBRL.format(valorFinal));
+  } catch (err) {
+    console.error('Erro ao gerar:', err);
+    let msg = err.message || String(err);
+    if (err.properties && err.properties.errors) {
+      msg += '\n— ' + err.properties.errors.map(e => e.message).join('\n— ');
+    }
+    mostrarErro('Erro ao gerar: ' + msg);
+  }
+}
+
+function mostrarErro(msg) {
+  const el = $('erro-geracao');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+// =========================================================================
+// TOAST
+// =========================================================================
+
+function showToast(msg, tipo = 'success') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.remove('hidden');
+  if (tipo === 'warning') {
+    t.classList.remove('bg-arsenal-cyan', 'text-arsenal-bg');
+    t.classList.add('bg-arsenal-warning', 'text-arsenal-bg');
+  } else {
+    t.classList.add('bg-arsenal-cyan', 'text-arsenal-bg');
+    t.classList.remove('bg-arsenal-warning');
+  }
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+// =========================================================================
+// SETUP
+// =========================================================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Data padrão
+  const hoje = new Date();
+  $('data_proposta').value = hoje.toISOString().split('T')[0];
+
+  // Carregar dados
+  carregarCalculista();
+  carregarDeURL();
+  renderHistorico();
+
+  // Recalcular em qualquer mudança (exceto valor_override que tem listener próprio)
+  document.querySelectorAll('input, select').forEach(el => {
+    if (el.id === 'valor_override') return;
+    el.addEventListener('input', atualizarResumo);
+    el.addEventListener('change', atualizarResumo);
+  });
+
+  // Botões
+  $('btn-salvar-calculista').addEventListener('click', salvarCalculista);
+  $('btn-editar-calculista').addEventListener('click', expandirCalculista);
+  $('btn-gerar').addEventListener('click', gerarDocx);
+  $('btn-copiar-link').addEventListener('click', gerarLink);
+
+  // Override manual
+  $('btn-toggle-override').addEventListener('click', () => {
+    const sec = $('override-section');
+    if (sec.classList.contains('hidden')) {
+      sec.classList.remove('hidden');
+      const { total } = calcular(lerTodosInputs());
+      $('valor_override').value = fmtBRLNum.format(total);
+      valorOverride = total;
+      atualizarResumo();
+      $('valor_override').focus();
+      $('valor_override').select();
+    } else {
+      sec.classList.add('hidden');
+      valorOverride = null;
+      $('valor_override').value = '';
+      atualizarResumo();
+    }
+  });
+
+  $('valor_override').addEventListener('input', (e) => {
+    const v = parseValorBR(e.target.value);
+    valorOverride = v;
+    atualizarResumo();
+  });
+  $('valor_override').addEventListener('blur', (e) => {
+    // Reformatar quando perde foco, se valor válido
+    const v = parseValorBR(e.target.value);
+    if (v !== null) e.target.value = fmtBRLNum.format(v);
+  });
+
+  $('btn-resetar-override').addEventListener('click', () => {
+    valorOverride = null;
+    $('valor_override').value = '';
+    $('override-section').classList.add('hidden');
+    atualizarResumo();
+  });
+
+  // Tooltips: suporte a click pra mobile
+  document.querySelectorAll('.tooltip-trigger').forEach(t => {
+    t.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const content = t.parentElement.querySelector('.tooltip-content');
+      const wasShown = content.classList.contains('shown');
+      document.querySelectorAll('.tooltip-content.shown').forEach(c => c.classList.remove('shown'));
+      if (!wasShown) content.classList.add('shown');
+    });
+  });
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.tooltip-content.shown').forEach(c => c.classList.remove('shown'));
+  });
+
+  atualizarResumo();
+});
+</script>
+
+</body>
+</html>
