@@ -3,1009 +3,610 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arsenal Cálculo 200 — Calculadora de Honorários</title>
-
-<!-- Google Fonts -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-
-<!-- Tailwind config (DEVE vir antes do CDN) -->
-<script>
-  tailwind = { config: {
-    theme: {
-      extend: {
-        colors: {
-          'arsenal-bg':       '#070B0B',
-          'arsenal-surface':  '#0E1616',
-          'arsenal-surface2': '#142020',
-          'arsenal-border':   '#1E3030',
-          'arsenal-cyan':     '#2DFFD4',
-          'arsenal-cyan-dim': '#14998A',
-          'arsenal-text':     '#E6F7F2',
-          'arsenal-muted':    '#7A9994',
-          'arsenal-warning':  '#FFB84D',
-        },
-        fontFamily: {
-          'display': ['"Space Grotesk"', 'sans-serif'],
-          'sans':    ['Inter', 'system-ui', 'sans-serif'],
-        },
-        boxShadow: {
-          'glow':         '0 0 20px rgba(45, 255, 212, 0.25)',
-          'glow-strong':  '0 0 30px rgba(45, 255, 212, 0.45)',
-        }
-      }
-    }
-  }};
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- Bibliotecas para gerar o .docx (usando jsdelivr — mais permissivo p/ file://) -->
-<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-
+<title>Estrategista em Liquidação Trabalhista — Gerador de Prospecção</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: #070B0B;
-    background-image:
-      linear-gradient(rgba(45,255,212,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45,255,212,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    color: #E6F7F2;
+  :root {
+    --bg: #04070f; --surface: #080e1a; --surface2: #0c1422; --border2: #162545;
+    --blue: #1a6bff; --blue2: #0052e0; --blue-dim: #0a3a8a;
+    --blue-glow: rgba(26,107,255,0.08); --blue-glow2: rgba(26,107,255,0.15);
+    --text: #e8f0ff; --muted: #5a7099; --cyan: #00e5ff; --green: #00e676; --red: #ff1744; --yellow: #f5c518;
   }
-  .font-display { font-family: 'Space Grotesk', sans-serif; }
-  .glow-text { text-shadow: 0 0 20px rgba(45, 255, 212, 0.6); }
-
-  /* Toggle switch */
-  .toggle-track {
-    width: 2.75rem; height: 1.5rem;
-    background: #142020;
-    border: 1px solid #1E3030;
-    border-radius: 9999px;
-    position: relative;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle-track::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 18px; height: 18px;
-    background: #7A9994;
-    border-radius: 9999px;
-    transition: all 0.2s;
-  }
-  input[type="checkbox"]:checked + .toggle-track {
-    background: #2DFFD4;
-    border-color: #2DFFD4;
-    box-shadow: 0 0 12px rgba(45,255,212,0.45);
-  }
-  input[type="checkbox"]:checked + .toggle-track::after {
-    transform: translateX(20px);
-    background: #070B0B;
-  }
-
-  /* Inputs */
-  .input-arsenal {
-    background: #142020;
-    border: 1px solid #1E3030;
-    border-radius: 0.5rem;
-    padding: 0.625rem 1rem;
-    color: #E6F7F2;
-    width: 100%;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .input-arsenal:focus {
-    outline: none;
-    border-color: #2DFFD4;
-    box-shadow: 0 0 0 3px rgba(45,255,212,0.15);
-  }
-  .input-arsenal::placeholder { color: #4A6661; }
-
-  .label-arsenal {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #7A9994;
-    font-weight: 500;
-    margin-bottom: 0.375rem;
-    display: block;
-  }
-
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type=number] { -moz-appearance: textfield; }
-
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7) sepia(1) saturate(5) hue-rotate(120deg);
-    cursor: pointer;
-  }
-
-  /* Tooltip */
-  .tooltip-wrapper { position: relative; display: inline-flex; align-items: center; }
-  .tooltip-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px; height: 18px;
-    border-radius: 9999px;
-    background: #142020;
-    border: 1px solid #14998A;
-    color: #14998A;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: help;
-    margin-left: 6px;
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .tooltip-trigger:hover { background: #2DFFD4; color: #070B0B; border-color: #2DFFD4; }
-  .tooltip-content {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    background: #0E1616;
-    border: 1px solid #2DFFD4;
-    color: #E6F7F2;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: normal;
-    line-height: 1.4;
-    width: 260px;
-    text-align: left;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
-    z-index: 50;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(45,255,212,0.15);
-  }
-  .tooltip-wrapper:hover .tooltip-content,
-  .tooltip-content.shown { opacity: 1; pointer-events: auto; }
-  /* Setinha do tooltip */
-  .tooltip-content::after {
-    content: '';
-    position: absolute;
-    top: 100%; left: 12px;
-    border: 6px solid transparent;
-    border-top-color: #2DFFD4;
-  }
-
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.2s ease-out; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(26,107,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(26,107,255,0.03) 1px, transparent 1px); background-size: 40px 40px; pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(26,107,255,0.07) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+  .wrap { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; padding: 36px 20px 80px; }
+  header { margin-bottom: 40px; }
+  .logo-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .logo-icon { width: 44px; height: 44px; background: var(--blue-glow2); border: 1px solid var(--blue-dim); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .logo-text { font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700; color: var(--blue); letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.3; }
+  .logo-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+  h1 { font-family: 'Rajdhani', sans-serif; font-size: clamp(26px, 5vw, 42px); font-weight: 700; line-height: 1.05; color: var(--text); margin-bottom: 10px; letter-spacing: 0.02em; text-transform: uppercase; }
+  h1 .hl { color: var(--blue); text-shadow: 0 0 30px rgba(26,107,255,0.4); }
+  .subtitle { color: var(--muted); font-size: 14px; max-width: 560px; line-height: 1.7; }
+  .card { background: var(--surface); border: 1px solid var(--border2); border-radius: 6px; padding: 28px; margin-bottom: 20px; position: relative; overflow: hidden; }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--blue), transparent); opacity: 0.4; }
+  .card-title { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--blue); margin-bottom: 22px; display: flex; align-items: center; gap: 8px; }
+  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+  label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  input[type="text"] { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 15px; padding: 12px 16px; outline: none; transition: all 0.2s; margin-bottom: 16px; }
+  input[type="text"]:focus { border-color: var(--blue-dim); box-shadow: 0 0 0 3px var(--blue-glow); }
+  input[type="text"]::placeholder { color: var(--muted); opacity: 0.4; }
+  textarea { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; padding: 14px 16px; outline: none; transition: all 0.2s; resize: vertical; min-height: 180px; line-height: 1.6; }
+  textarea:focus { border-color: var(--blue-dim); box-shadow: 0 0 0 3px var(--blue-glow); }
+  textarea::placeholder { color: var(--muted); opacity: 0.4; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 500px) { .field-row { grid-template-columns: 1fr; } }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; padding: 14px 28px; border-radius: 4px; border: none; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--blue); color: #fff; width: 100%; margin-top: 8px; box-shadow: 0 0 20px rgba(26,107,255,0.2); }
+  .btn-primary:hover { background: var(--blue2); transform: translateY(-1px); }
+  .btn-green { background: var(--green); color: #020f05; width: 100%; margin-top: 12px; font-size: 15px; padding: 16px; }
+  .btn-green:hover { background: #00c853; transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--blue); border: 1px solid var(--blue-dim); padding: 9px 20px; font-size: 12px; }
+  .btn-outline:hover { background: var(--blue-glow); }
+  .preview-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--surface2); color: var(--blue); font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border2); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border2); color: var(--text); vertical-align: top; line-height: 1.5; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--blue-glow); }
+  .resumo-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .resumo-item { background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 14px 20px; text-align: center; flex: 1; min-width: 90px; }
+  .resumo-num { font-family: 'Rajdhani', sans-serif; font-size: 28px; font-weight: 700; color: var(--blue); line-height: 1; }
+  .resumo-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+  .alert { border-radius: 4px; padding: 12px 16px; font-size: 13px; line-height: 1.6; margin-bottom: 16px; }
+  .alert-info { background: var(--blue-glow); border: 1px solid var(--blue-dim); color: var(--muted); }
+  .hidden { display: none !important; }
+  .instrucoes { background: var(--bg); border: 1px solid var(--border2); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .instrucoes ol { padding-left: 20px; }
+  .instrucoes li { font-size: 13px; color: var(--muted); line-height: 1.9; }
+  .instrucoes li strong { color: var(--text); }
+  .warn-box { background: rgba(245,197,24,0.06); border: 1px solid rgba(245,197,24,0.25); border-radius: 4px; padding: 16px; margin-bottom: 20px; }
+  .warn-title { font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); margin-bottom: 8px; }
+  .warn-text { font-size: 12px; color: rgba(245,197,24,0.75); line-height: 1.7; }
 </style>
 </head>
-<body class="min-h-screen">
-
-<div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
-
-  <!-- Header -->
-  <header class="mb-10">
-    <div class="text-arsenal-cyan-dim text-xs uppercase tracking-[0.3em] font-semibold mb-2">▸ Arsenal Cálculo 200</div>
-    <h1 class="font-display font-bold text-3xl md:text-5xl text-arsenal-text">
-      Calculadora de <span class="text-arsenal-cyan glow-text">Honorários</span>
-    </h1>
-    <p class="text-arsenal-muted mt-2 text-sm md:text-base">Preencha os dados do processo e gere a proposta em formato Word</p>
-    <div class="mt-6 h-px bg-gradient-to-r from-arsenal-cyan/40 via-arsenal-cyan/10 to-transparent"></div>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo-row">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <div class="logo-text">Estrategista em Liquidação Trabalhista</div>
+        <div class="logo-sub">Gerador de Prospecção Inteligente</div>
+      </div>
+    </div>
+    <h1>Do Maps à <span class="hl">Planilha Pronta</span></h1>
+    <p class="subtitle">Cole o resultado da busca do Google Maps e baixe sua planilha com mensagens personalizadas e links do WhatsApp prontos para enviar.</p>
   </header>
 
-  <!-- Layout -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-    <!-- COLUNA ESQUERDA -->
-    <div class="space-y-6">
-
-      <!-- Calculista -->
-      <section id="card-calculista" class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <div id="calculista-expanded">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm">◆ Dados do Calculista</h2>
-            <span id="calc-saved-flag" class="hidden text-arsenal-cyan text-xs">✓ Salvo</span>
-          </div>
-
-          <div class="space-y-4">
-            <div>
-              <label class="label-arsenal" for="nome_calculista">Seu nome</label>
-              <input type="text" id="nome_calculista" class="input-arsenal" placeholder="Ex: João Silva">
-            </div>
-            <div>
-              <label class="label-arsenal" for="documento_calculista">Seu documento (CPF, CNPJ ou OAB)</label>
-              <input type="text" id="documento_calculista" class="input-arsenal" placeholder="Ex: 123.456.789-00">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="label-arsenal" for="qtd_calculos_feitos">Cálculos já feitos</label>
-                <input type="number" id="qtd_calculos_feitos" class="input-arsenal" min="0" step="1" placeholder="0">
-              </div>
-              <div class="flex flex-col justify-end">
-                <label class="label-arsenal">+10 nomeações?</label>
-                <label class="flex items-center gap-3 cursor-pointer pt-1">
-                  <input type="checkbox" id="mais_de_10_nomeacoes" class="sr-only">
-                  <span class="toggle-track"></span>
-                  <span class="text-sm text-arsenal-muted toggle-label">Não</span>
-                </label>
-              </div>
-            </div>
-
-            <button id="btn-salvar-calculista" class="w-full bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-cyan/40 hover:border-arsenal-cyan text-arsenal-cyan font-display font-bold uppercase tracking-wider text-sm py-3 rounded-lg transition">
-              💾 Salvar dados do calculista
-            </button>
-          </div>
-        </div>
-
-        <div id="calculista-collapsed" class="hidden items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-arsenal-cyan">✓</span>
-            <div>
-              <div class="text-arsenal-cyan-dim text-xs uppercase tracking-wider">Calculista</div>
-              <div id="calc-resumo-nome" class="font-medium"></div>
-            </div>
-          </div>
-          <button id="btn-editar-calculista" class="text-arsenal-cyan text-sm hover:underline">[editar]</button>
-        </div>
-      </section>
-
-      <!-- Processo -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Dados do Processo</h2>
-        <div class="space-y-4">
-
-          <div>
-            <label class="label-arsenal" for="numero_processo">Número do processo</label>
-            <input type="text" id="numero_processo" class="input-arsenal" placeholder="0010234-12.2024.5.02.0716">
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="reclamante">Reclamante</label>
-              <input type="text" id="reclamante" class="input-arsenal" placeholder="Nome do reclamante">
-            </div>
-            <div>
-              <label class="label-arsenal" for="reclamada">Reclamada</label>
-              <input type="text" id="reclamada" class="input-arsenal" placeholder="Nome da empresa">
-            </div>
-          </div>
-
-          <div>
-            <label class="label-arsenal" for="nome_advogado">Destinatário do orçamento</label>
-            <input type="text" id="nome_advogado" class="input-arsenal" placeholder="Dr. Fulano de Tal">
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="representando">Representando</label>
-              <select id="representando" class="input-arsenal">
-                <option value="Reclamante">Reclamante</option>
-                <option value="Reclamada">Reclamada</option>
-              </select>
-            </div>
-            <div>
-              <label class="label-arsenal" for="data_proposta">Data da proposta</label>
-              <input type="date" id="data_proposta" class="input-arsenal">
-            </div>
-          </div>
-
-          <div class="h-px bg-arsenal-border my-2"></div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="anos_contrato">Anos de contrato</label>
-              <input type="number" id="anos_contrato" class="input-arsenal" min="0" step="1" placeholder="0">
-            </div>
-            <div>
-              <label class="label-arsenal" for="maior_remuneracao">Maior remuneração TRCT (R$)</label>
-              <input type="number" id="maior_remuneracao" class="input-arsenal" min="0" step="0.01" placeholder="0,00">
-            </div>
-          </div>
-
-          <div class="space-y-3 pt-2">
-
-            <!-- Urgência -->
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                É urgente? <span class="text-arsenal-muted ml-1">(≤ 2 dias úteis)</span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="urgente" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <!-- NOVO: Verbas indenizatórias e rescisórias (não altera valor) -->
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Verbas indenizatórias e rescisórias
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Indenização por danos morais, FGTS + 40%, verbas rescisórias e multas. Item básico — incluído sem alterar o valor.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="verbas_indenizatorias" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Apuração de verbas do contrato
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Verbas devidas mês a mês como diferença salarial, adicionais de periculosidade e insalubridade, comissões.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="apuracao_verbas" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Horas extras
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Apuração de verbas devidas pela jornada extraordinária.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="horas_extras" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Pensionamento vitalício
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Verbas devidas por pensionamento em caso de acidente.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="pensionamento_vitalicio" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Digitação de cartões de ponto
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Necessidade de digitação manual de cartões de ponto.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="digitacao_cartoes_ponto" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Digitação de contracheques
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Necessidade de digitação manual de verbas do contracheque.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="digitacao_contracheques" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-          </div>
-
-        </div>
-      </section>
-
+  <div id="tela1">
+    <div class="warn-box">
+      <div class="warn-title">⚠ Atenção antes de prospectar</div>
+      <div class="warn-text">Enviar mensagens frias para 20 números/dia vindos do Maps é o padrão que o WhatsApp identifica e bane. Use um <strong>chip dedicado</strong>, faça <strong>aquecimento prévio da conta</strong> e respeite <strong>intervalos aleatórios entre envios</strong>. Para volume maior, considere o <strong>WhatsApp Business API</strong>.</div>
     </div>
 
-    <!-- COLUNA DIREITA -->
-    <div class="space-y-6 lg:sticky lg:top-6 lg:self-start">
+    <div class="instrucoes">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue);margin-bottom:10px">Como usar</div>
+      <ol>
+        <li>Abra o <strong>Google Maps</strong> no navegador ou celular</li>
+        <li>Pesquise: <strong>"advocacia trabalhista [sua cidade]"</strong>, <strong>"contabilidade [cidade]"</strong> ou <strong>"sindicato [cidade]"</strong></li>
+        <li>Selecione todos os resultados, copie e cole no campo abaixo — pode colar os três juntos</li>
+        <li>Clique em <strong>Processar</strong> — o app detecta o tipo de cada contato automaticamente</li>
+        <li>Baixe a <strong>planilha Excel</strong> com mensagem SPIN pronta e link clicável do WhatsApp com a mensagem embutida</li>
+      </ol>
+    </div>
 
-      <!-- Resumo -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-5">◆ Resumo do Cálculo</h2>
-
-        <div id="breakdown" class="space-y-2.5 text-sm tabular-nums"></div>
-
-        <div class="mt-5 pt-5 border-t-2 border-arsenal-border">
-          <div class="text-arsenal-muted uppercase text-xs tracking-wider mb-1">Total</div>
-          <div id="total-display" class="font-display font-bold text-4xl md:text-5xl text-arsenal-cyan glow-text tabular-nums">
-            R$ 0,00
-          </div>
-          <div id="aviso-override" class="hidden mt-2 text-xs text-arsenal-warning">
-            ⚠ Valor ajustado manualmente — original: <span id="valor-original-display"></span>
-          </div>
+    <div class="card">
+      <div class="card-title">Seus dados</div>
+      <div class="field-row">
+        <div>
+          <label>Seu nome completo</label>
+          <input type="text" id="nome-calc" placeholder="Ex: João Silva">
         </div>
-
-        <!-- Override manual -->
-        <div class="mt-4">
-          <button id="btn-toggle-override" class="text-arsenal-cyan text-xs hover:underline">
-            ✎ Editar valor manualmente
-          </button>
-          <div id="override-section" class="hidden mt-3 fade-in">
-            <label class="label-arsenal">Valor final (R$) — pode usar vírgula ou ponto</label>
-            <div class="flex gap-2">
-              <input type="text" id="valor_override" class="input-arsenal tabular-nums" inputmode="decimal" placeholder="2.940,00">
-              <button id="btn-resetar-override" class="px-3 py-2 text-xs text-arsenal-muted hover:text-arsenal-cyan border border-arsenal-border rounded-lg whitespace-nowrap">Resetar</button>
-            </div>
-          </div>
+        <div>
+          <label>Cidade da prospecção</label>
+          <input type="text" id="cidade-calc" placeholder="Ex: Santarém">
         </div>
+      </div>
+    </div>
 
-        <div class="mt-6 space-y-2">
-          <button id="btn-gerar" class="w-full bg-arsenal-cyan hover:bg-arsenal-cyan/90 text-arsenal-bg font-display font-bold uppercase tracking-wider px-6 py-4 rounded-lg shadow-glow hover:shadow-glow-strong transition disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
-            📥 Gerar Proposta .docx
-          </button>
-          <div id="aviso-validacao" class="hidden text-xs text-arsenal-warning">
-            Preencha os campos obrigatórios antes de gerar.
-          </div>
-          <div id="erro-geracao" class="hidden text-xs text-arsenal-warning bg-arsenal-warning/10 border border-arsenal-warning/40 rounded p-2"></div>
-          <button id="btn-copiar-link" class="w-full bg-transparent border border-arsenal-border hover:border-arsenal-cyan text-arsenal-muted hover:text-arsenal-cyan text-sm py-2.5 rounded-lg transition">
-            🔗 Copiar link da proposta
-          </button>
-        </div>
-      </section>
-
-      <!-- Histórico -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Histórico (últimas 10)</h2>
-        <div id="historico-lista" class="space-y-2 text-sm">
-          <div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>
-        </div>
-      </section>
-
+    <div class="card">
+      <div class="card-title">Resultado do Google Maps</div>
+      <div class="alert alert-info">O tipo de cada contato (Advocacia, Contabilidade ou Sindicato) é detectado automaticamente. Pode colar resultados de buscas diferentes juntos.</div>
+      <textarea id="texto-maps" placeholder="Cole aqui o texto copiado do Google Maps..."></textarea>
+      <button class="btn btn-primary" onclick="processar()" style="margin-top:20px">⚡ Processar e Gerar Planilha</button>
     </div>
   </div>
 
-  <div id="toast" class="hidden fixed bottom-6 right-6 bg-arsenal-cyan text-arsenal-bg font-bold px-5 py-3 rounded-lg shadow-glow-strong text-sm fade-in z-50"></div>
-
-  <footer class="mt-12 pt-8 border-t border-arsenal-border text-arsenal-muted text-xs text-center">
-    <p>Seus dados ficam apenas no seu navegador. Nenhuma informação é enviada a servidores.</p>
-    <p class="mt-1">A chave PIX deve ser preenchida manualmente no Word após gerar a proposta.</p>
-  </footer>
+  <div id="tela2" class="hidden">
+    <div class="card">
+      <div class="card-title">Resultado</div>
+      <div class="resumo-row">
+        <div class="resumo-item"><div class="resumo-num" id="tot-contatos">0</div><div class="resumo-label">Contatos</div></div>
+        <div class="resumo-item"><div class="resumo-num" id="tot-com-tel">0</div><div class="resumo-label">Com telefone</div></div>
+        <div class="resumo-item"><div class="resumo-num" id="tot-dias">0</div><div class="resumo-label">Dias</div></div>
+        <div class="resumo-item"><div class="resumo-num" id="tot-uniq">0</div><div class="resumo-label">Msgs únicas/50</div></div>
+      </div>
+      <button class="btn btn-green" onclick="baixarExcel()">⬇ Baixar Planilha Excel</button>
+      <div style="margin-top:24px">
+        <div class="card-title">Pré-visualização</div>
+        <div class="preview-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>Tipo</th><th>Telefone</th><th>WhatsApp</th><th>Prévia da mensagem</th></tr></thead>
+            <tbody id="preview-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-outline" onclick="voltarInicio()">← Nova Busca</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// =========================================================================
-// LÓGICA DE CÁLCULO
-// =========================================================================
-
-function valorBase(qtdCalculos) {
-  const q = Number(qtdCalculos) || 0;
-  if (q <= 50) return 200;
-  if (q <= 100) return 400;
-  return 600;
-}
-
-function faixaRemuneracao(valor, base) {
-  const v = Number(valor) || 0;
-  if (v <= 3500) return 0;
-  if (v <= 5000) return base * 0.5;
-  if (v <= 10000) return base;
-  return base * 2;
-}
-
-function calcular(inputs) {
-  const base = valorBase(inputs.qtd_calculos_feitos);
-  const anos = Number(inputs.anos_contrato) || 0;
-
-  const itens = [
-    { label: "Valor base dos cálculos", valor: base, sempre: true },
-    { label: "+10 nomeações (70% do base)",
-      valor: inputs.mais_de_10_nomeacoes ? base * 0.7 : 0 },
-    { label: "Urgência ≤ 2 dias úteis (50% do base)",
-      valor: inputs.urgente ? base * 0.5 : 0 },
-    { label: "Maior remuneração (TRCT)",
-      valor: faixaRemuneracao(inputs.maior_remuneracao, base) },
-    // Verbas indenizatórias: não altera valor — só aparece no breakdown como "incluído"
-    { label: "Verbas indenizatórias e rescisórias",
-      valor: 0,
-      incluido: !!inputs.verbas_indenizatorias },
-    { label: "Apuração de verbas (20% do base)",
-      valor: inputs.apuracao_verbas ? base * 0.2 : 0 },
-    { label: "Horas extras (50% do base)",
-      valor: inputs.horas_extras ? base * 0.5 : 0 },
-    { label: "Pensionamento vitalício (50% do base)",
-      valor: inputs.pensionamento_vitalicio ? base * 0.5 : 0 },
-    { label: "Digitação de cartões de ponto",
-      valor: inputs.digitacao_cartoes_ponto ? (base / 5) * anos : 0 },
-    { label: "Digitação de contracheques",
-      valor: inputs.digitacao_contracheques ? (base / 10) * anos : 0 },
-  ];
-
-  const total = itens.reduce((s, i) => s + i.valor, 0);
-  return { itens, total };
-}
-
-// =========================================================================
-// HELPERS
-// =========================================================================
-
-const fmtBRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-const fmtBRLNum = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const fmtDataExtenso = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-
-const $ = (id) => document.getElementById(id);
-
-// Parser robusto BR — aceita "2940", "2940,00", "2.940,00", "2,940.00", "R$ 2.940,00"
-function parseValorBR(str) {
-  if (str === null || str === undefined) return null;
-  let s = String(str).trim().replace(/[^\d,\.\-]/g, '');
-  if (!s) return null;
-  const ultVirg = s.lastIndexOf(',');
-  const ultPonto = s.lastIndexOf('.');
-  if (ultVirg > -1 && ultVirg > ultPonto) {
-    // Decimal é vírgula (formato BR): pontos são milhar
-    s = s.replace(/\./g, '').replace(',', '.');
-  } else if (ultPonto > -1 && ultPonto > ultVirg) {
-    // Decimal é ponto (formato US): vírgulas são milhar
-    s = s.replace(/,/g, '');
+// ---- BLOCOS ----
+const B = {
+  titulos: ["Estrategista em Liquidação Trabalhista","Especialista em Cálculos Trabalhistas"],
+  advocacia: {
+    abertura: ["Olá! Tudo bem?","Olá, tudo certo?","Olá! Tudo bom?","Boa tarde, tudo bem?"],
+    apresentacao: [
+      "Sou {eu}, {titulo}. Estou prospectando parcerias com escritórios de advocacia em {cidade} e vi {nome} aqui no Maps.",
+      "Meu nome é {eu}, sou {titulo}. Atendo escritórios em {cidade} e me chamou atenção {nome}.",
+      "Sou {eu}, {titulo}. Vi {nome} aqui em {cidade} e por isso entrei em contato.",
+      "Aqui é {eu}, {titulo}. Estou conversando com escritórios de advocacia em {cidade} e {nome} entrou na minha lista."
+    ],
+    elogio: [
+      "Pelas avaliações, dá pra ver que o escritório é referência por aí.",
+      "A reputação de vocês em {cidade} é consolidada — {reviews} avaliações dizem isso.",
+      "O escritório claramente é uma referência na advocacia em {cidade}."
+    ],
+    pivot: [
+      "Uma coisa que vejo pouco nas execuções trabalhistas: alguém que olha para a sentença e pergunta qual é o melhor valor possível dentro do que foi decidido. Do lado do reclamante, verbas e reflexos que poderiam ter sido calculados melhor. Do lado da empresa, valores que a contraparte inflou sem fundamentação. Nos dois casos, sem conferência técnica aprofundada, o resultado fica abaixo do que poderia ser.",
+      "Na fase de liquidação, o cálculo quase nunca é conferido item por item antes de ser aceito. Correção monetária equivocada, base de FGTS errada, reflexos de horas extras ignorados. Do lado do reclamante, isso significa receber menos do que poderia. Do lado da empresa, significa pagar mais do que deveria. São dois lados do mesmo problema.",
+      "Execução trabalhista bem conduzida não termina na sentença. Termina quando o valor final reflete o melhor resultado possível dentro do que foi decidido — tanto para quem recebe quanto para quem paga. Essa análise técnica é o que define a diferença entre um cálculo qualquer e um cálculo estratégico.",
+      "Poucas execuções trabalhistas têm alguém olhando para a sentença e mapeando todas as lacunas que podem ser exploradas em favor do cliente. Do lado do reclamante, verbas esquecidas e reflexos mal calculados. Do lado da empresa, valores inflados pela contraparte sem fundamentação. Esse trabalho existe e faz diferença no resultado final.",
+      "O cálculo de liquidação é onde o resultado financeiro do cliente é definido de verdade. Uma sentença favorável com cálculo mal conferido pode representar menos para o reclamante ou mais para a empresa do que o necessário. Nos dois lados há margem técnica que raramente é explorada com profundidade."
+    ],
+    pergunta: [
+      "Isso é algo que vocês já pararam para mapear na fase de execução?",
+      "Como vocês costumam lidar com essa parte hoje?",
+      "Quando chega o cálculo da parte contrária, tem alguém que confere item por item antes de aceitar?",
+      "Isso já gerou algum problema concreto aí no escritório?",
+      "Como funciona essa parte na prática por aí?"
+    ]
+  },
+  contabilidade: {
+    abertura: ["Olá! Tudo bem?","Olá, tudo certo?","Olá! Tudo bom?","Boa tarde, tudo bem?"],
+    apresentacao: [
+      "Sou {eu}, {titulo}. Estou conversando com escritórios contábeis em {cidade} e vi {nome} aqui no Maps.",
+      "Meu nome é {eu}, sou {titulo}. Atendo contadores em {cidade} e me chamou atenção o trabalho de vocês.",
+      "Sou {eu}, {titulo}. Vi {nome} aqui em {cidade} e queria te propor uma parceria.",
+      "Aqui é {eu}, {titulo}. Estou prospectando parcerias com escritórios contábeis em {cidade} e {nome} entrou na minha lista."
+    ],
+    elogio: [
+      "Pelas avaliações, dá pra ver que vocês têm uma carteira sólida.",
+      "A reputação consolidada de vocês em {cidade} chama atenção — {reviews} avaliações.",
+      "O escritório claramente é referência na contabilidade em {cidade}."
+    ],
+    pivot: [
+      "Seus clientes empresa já enfrentam ações trabalhistas. Quando chegam na fase de cálculo, procuram alguém de confiança e normalmente indicam para fora do seu escritório. Você já parou para pensar que esse serviço já existe dentro da sua carteira, só ainda não está sendo oferecido?",
+      "Escritório contábil que atende empresa já tem o ativo mais difícil de conquistar: a confiança do cliente. Quando esse cliente tem uma ação trabalhista e precisa de cálculo de liquidação, ele vai buscar fora. Mas não precisaria. Esse serviço pode ser entregue com o seu nome, com suporte técnico especializado por baixo.",
+      "Cálculo trabalhista de liquidação é um serviço de ticket alto que seus clientes empresa já precisam. A maioria dos contábeis em {cidade} ainda não oferece isso, e indica para fora quando o assunto aparece. É uma receita que já existe dentro da sua carteira esperando ser capturada.",
+      "A lógica da parceria é direta: você já atende a empresa, já tem a confiança dela para folha e obrigações fiscais. Quando ela tem uma ação trabalhista, em vez de indicar para fora, você resolve internamente. Eu entro com o trabalho técnico, você mantém o cliente e dividimos o resultado.",
+      "Quando uma das empresas que você atende é processada na Justiça do Trabalho, para onde vai o cálculo da liquidação? Se a resposta é fora do seu escritório, há uma oportunidade concreta sendo deixada para trás toda vez que isso acontece."
+    ],
+    pergunta: [
+      "Como costuma funcionar quando um cliente de vocês tem uma ação trabalhista?",
+      "Isso já passou pela cabeça de vocês como uma possibilidade?",
+      "Já perderam algum cliente para esse tipo de demanda?",
+      "Como vocês lidam hoje quando aparece esse tipo de necessidade na carteira?",
+      "Isso é algo que vocês já chegaram a considerar oferecer para os clientes?"
+    ]
+  },
+  sindicato: {
+    abertura: ["Olá! Tudo bem?","Olá, tudo certo?","Olá! Tudo bom?","Boa tarde, tudo bem?"],
+    apresentacao: [
+      "Sou {eu}, {titulo}. Atuo com sindicatos aqui em {cidade} e vi {nome} aqui no Maps.",
+      "Meu nome é {eu}, sou {titulo}. Presto serviço para sindicatos em {cidade}, principalmente na fase de liquidação de ações coletivas.",
+      "Sou {eu}, {titulo}. Trabalho com sindicatos em {cidade}, especificamente no acompanhamento técnico da fase de liquidação.",
+      "Aqui é {eu}, {titulo}. Atuo no acompanhamento técnico de cálculos em ações coletivas e {nome} entrou na minha lista de contatos em {cidade}."
+    ],
+    pivot: [
+      "Ação coletiva ganha no mérito é só metade do trabalho. Na liquidação é onde o valor conquistado pode crescer ou encolher dependendo de quem confere o cálculo com mais profundidade. Você já avaliou se os trabalhadores estão recebendo o melhor valor possível dentro do que a sentença permite?",
+      "O que define o resultado real de uma ação coletiva não é só a sentença. É o quanto do que foi conquistado chega de fato para o trabalhador na fase de liquidação. Sem análise técnica aprofundada do cálculo da contraparte, esse valor quase sempre fica abaixo do que poderia ser.",
+      "Na liquidação de ações coletivas, o cálculo apresentado pela parte contrária raramente é conferido item por item. Verbas calculadas a menor, reflexos ignorados, correção monetária equivocada. Tudo isso reduz o que o trabalhador recebe sem que ninguém perceba.",
+      "Uma sentença coletiva favorável abre uma janela. O quanto dessa janela é aproveitada para o trabalhador depende de quem olha para o cálculo de liquidação com profundidade técnica suficiente para identificar o melhor valor possível dentro do que foi decidido.",
+      "O trabalhador que confia no sindicato espera receber o máximo do que foi conquistado. Na fase de liquidação, sem conferência técnica especializada, esse valor raramente é o melhor possível dentro da sentença. Essa é a fase onde mais se pode fazer pela base."
+    ],
+    pergunta: [
+      "Isso é algo que o sindicato já avaliou formalmente?",
+      "Como vocês acompanham essa parte hoje na prática?",
+      "Já tiveram casos em que o valor final ficou abaixo do esperado na liquidação?",
+      "Como o sindicato lida com essa fase hoje quando chega o cálculo da contraparte?",
+      "Isso já gerou alguma insatisfação por parte dos trabalhadores beneficiados?"
+    ]
   }
-  const v = parseFloat(s);
-  return isNaN(v) ? null : v;
+};
+
+const LGPD = "\n\nSe preferir não receber mensagens, é só me responder e removo seu contato.";
+
+// ---- HASH KNUTH ----
+function kh(n) {
+  let h = n >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  h = Math.imul(h ^ (h >>> 16), 0x45d9f3b);
+  return (h ^ (h >>> 16)) >>> 0;
 }
 
-const CAMPOS_CALCULISTA = ['nome_calculista', 'documento_calculista', 'qtd_calculos_feitos', 'mais_de_10_nomeacoes'];
-const CAMPOS_PROCESSO = [
-  'numero_processo', 'reclamante', 'reclamada', 'nome_advogado', 'representando',
-  'data_proposta', 'urgente', 'verbas_indenizatorias', 'anos_contrato', 'maior_remuneracao',
-  'apuracao_verbas', 'horas_extras', 'pensionamento_vitalicio',
-  'digitacao_cartoes_ponto', 'digitacao_contracheques'
-];
-
-function lerCampo(id) {
-  const el = $(id);
-  if (!el) return null;
-  if (el.type === 'checkbox') return el.checked;
-  if (el.type === 'number') return el.value === '' ? 0 : Number(el.value);
-  return el.value;
+function pick(arr, seed, cat) {
+  const cs = cat.split('').reduce((a,c,i) => a ^ (c.charCodeAt(0) * (i+1) * 2654435761), 0) >>> 0;
+  return arr[kh(seed ^ cs) % arr.length];
 }
 
-function escreverCampo(id, valor) {
-  const el = $(id);
-  if (!el) return;
-  if (el.type === 'checkbox') el.checked = !!valor;
-  else el.value = valor ?? '';
+// ---- GERAR MENSAGEM ----
+function gerarMsg(c, idx) {
+  const tipo = c.tipo;
+  const bloco = B[tipo] || B.advocacia;
+  let seed = (idx * 2654435761) >>> 0;
+  for (let i = 0; i < c.nome.length; i++) seed = (seed ^ (c.nome.charCodeAt(i) * (i+1))) >>> 0;
+  seed = kh(seed);
+
+  const titulo = B.titulos[kh(seed ^ 0xdeadbeef) % B.titulos.length];
+  const abertura = pick(bloco.abertura, seed, 'abertura');
+  const apresentacao = pick(bloco.apresentacao, seed, 'apresentacao');
+  const pivot = pick(bloco.pivot, seed, 'pivot');
+  const pergunta = pick(bloco.pergunta, seed, 'pergunta');
+
+  let elogio = '';
+  const rating = parseFloat(c.rating) || 0;
+  const reviews = parseInt(c.reviews) || 0;
+  if (tipo !== 'sindicato' && bloco.elogio && rating >= 4.8 && reviews >= 30) {
+    elogio = pick(bloco.elogio, seed, 'elogio');
+  }
+
+  const sub = s => s
+    .replace(/\{eu\}/g, c.nomeCalc)
+    .replace(/\{titulo\}/g, titulo)
+    .replace(/\{cidade\}/g, c.cidade)
+    .replace(/\{nome\}/g, c.nome)
+    .replace(/\{reviews\}/g, reviews || '');
+
+  return [sub(abertura), sub(apresentacao), elogio ? sub(elogio) : null, sub(pivot), sub(pergunta)]
+    .filter(Boolean).join('\n\n') + LGPD;
 }
 
-function lerInputsCalculista() {
-  const obj = {};
-  CAMPOS_CALCULISTA.forEach(id => obj[id] = lerCampo(id));
-  return obj;
+// ---- PARSER MAPS (v4 - usa rating como âncora) ----
+// Estrutura de cada card no Maps:
+//   linha 1: NOME
+//   linha 2: rating "5.0(258)" OU "No reviews"
+//   linha 3: "<categoria> · <endereço>"
+//   linha 4: "<status> · <telefone>"
+//   linhas seguintes: Website, Directions, On-site services etc.
+const REGEX_RATING = /^([1-5][\.,]\d)\s*\(?\s*(\d+)\s*\)?$/;
+const REGEX_NO_REVIEWS = /^(no reviews|sem avaliações|sem avaliacoes)$/i;
+const FINAL_LIST = /^you'?ve reached the end of the list\.?$/i;
+const FINAL_LIST_PT = /^você (chegou|alcançou) (ao|o) (final|fim) da lista/i;
+const AUXILIARES = new Set([
+  'website','site','directions','como chegar',
+  'on-site services','on-site services not available','no local',
+  'online appointments','atendimento online',
+  'atende em domicílio','atende em domicilio',
+  'results','resultados','share','compartilhar',
+  'menu','reservar','save','salvar','call','ligar',
+  'delivery','sponsored','patrocinado','more hours',
+  '·','⋅','•','-',
+]);
+
+function ehAuxiliar(linha) {
+  const lc = linha.toLowerCase().trim();
+  if (AUXILIARES.has(lc)) return true;
+  if (FINAL_LIST.test(lc) || FINAL_LIST_PT.test(lc)) return true;
+  if (/^\(?\d+\)?$/.test(linha.trim())) return true;
+  if (linha.trim().length < 2) return true;
+  return false;
 }
-
-function lerInputsProcesso() {
-  const obj = {};
-  CAMPOS_PROCESSO.forEach(id => obj[id] = lerCampo(id));
-  return obj;
+function ehRating(linha) {
+  const t = linha.trim();
+  return REGEX_RATING.test(t) || REGEX_NO_REVIEWS.test(t);
 }
-
-function lerTodosInputs() {
-  return { ...lerInputsCalculista(), ...lerInputsProcesso() };
+function extrairTel(linha) {
+  const m = linha.match(/\(?(\d{2})\)?\s*(9?\s*\d{4})[\s\-]?(\d{4})/);
+  if (!m) return '';
+  const ddd = m[1];
+  if (parseInt(ddd) < 11 || parseInt(ddd) > 99) return '';
+  return `(${ddd}) ${m[2].replace(/\s/g,'')}-${m[3]}`;
 }
+function temTel(linha) { return extrairTel(linha) !== ''; }
 
-let valorOverride = null;
+function parsear(texto) {
+  const linhasBrutas = texto.split('\n').map(l => l.trim());
+  const linhas = [];
+  for (const l of linhasBrutas) {
+    if (!l) continue;
+    if (ehAuxiliar(l)) continue;
+    linhas.push(l);
+  }
+  const cards = [];
+  for (let i = 0; i < linhas.length; i++) {
+    if (!ehRating(linhas[i])) continue;
+    if (i === 0) continue;
+    const nome = linhas[i - 1];
+    if (ehRating(nome)) continue;
+    if (temTel(nome) && nome.length < 20) continue;
+    if (nome.length < 4) continue;
 
-// =========================================================================
-// RENDER DO RESUMO
-// =========================================================================
+    let rating = '', reviews = 0;
+    const rm = linhas[i].match(REGEX_RATING);
+    if (rm) { rating = rm[1].replace(',','.'); reviews = parseInt(rm[2]); }
 
-function atualizarResumo() {
-  const inputs = lerTodosInputs();
-  const { itens, total } = calcular(inputs);
-
-  const html = itens.map(i => {
-    if (i.incluido === true) {
-      return `
-        <div class="flex justify-between items-baseline text-arsenal-cyan-dim">
-          <span class="text-xs uppercase tracking-wide">${i.label}</span>
-          <span class="font-medium text-xs italic">incluído</span>
-        </div>`;
+    const blocoExtra = [];
+    for (let j = i + 1; j < Math.min(i + 6, linhas.length); j++) {
+      if (ehRating(linhas[j])) break;
+      blocoExtra.push(linhas[j]);
     }
-    if (i.incluido === false) {
-      return `
-        <div class="flex justify-between items-baseline text-arsenal-muted">
-          <span class="text-xs uppercase tracking-wide">${i.label}</span>
-          <span class="font-medium">—</span>
-        </div>`;
-    }
-    const zerado = i.valor === 0;
-    const cor = zerado ? 'text-arsenal-muted' : 'text-arsenal-text';
-    const valorFmt = zerado ? '—' : fmtBRL.format(i.valor);
-    return `
-      <div class="flex justify-between items-baseline ${cor}">
-        <span class="text-xs uppercase tracking-wide">${i.label}</span>
-        <span class="font-medium">${valorFmt}</span>
-      </div>`;
-  }).join('');
-  $('breakdown').innerHTML = html;
+    const textoBloco = blocoExtra.join(' \n ');
+    const pedacos = textoBloco.split(/\s*[·⋅•]\s*/).map(p => p.trim()).filter(Boolean);
 
-  let totalExibir = total;
-  if (valorOverride !== null) {
-    totalExibir = valorOverride;
-    $('aviso-override').classList.remove('hidden');
-    $('valor-original-display').textContent = fmtBRL.format(total);
-  } else {
-    $('aviso-override').classList.add('hidden');
-  }
-  $('total-display').textContent = fmtBRL.format(totalExibir);
-
-  document.querySelectorAll('.toggle-label').forEach(span => {
-    const cb = span.closest('label').querySelector('input[type="checkbox"]');
-    if (cb) span.textContent = cb.checked ? 'Sim' : 'Não';
-  });
-
-  validarFormulario();
-}
-
-function validarFormulario() {
-  const c = lerInputsCalculista();
-  const p = lerInputsProcesso();
-  const ok = (
-    c.nome_calculista && c.nome_calculista.trim() &&
-    c.documento_calculista && c.documento_calculista.trim() &&
-    c.qtd_calculos_feitos >= 0 &&
-    p.numero_processo && p.numero_processo.trim() &&
-    p.reclamante && p.reclamante.trim() &&
-    p.reclamada && p.reclamada.trim() &&
-    p.nome_advogado && p.nome_advogado.trim() &&
-    p.anos_contrato > 0 &&
-    p.maior_remuneracao > 0 &&
-    p.data_proposta
-  );
-  $('btn-gerar').disabled = !ok;
-  $('aviso-validacao').classList.toggle('hidden', ok);
-}
-
-// =========================================================================
-// LOCALSTORAGE
-// =========================================================================
-
-const KEY_CALC = 'arsenal_calculista_v1';
-const KEY_HIST = 'arsenal_historico_v1';
-
-function salvarCalculista() {
-  const dados = lerInputsCalculista();
-  if (!dados.nome_calculista || !dados.documento_calculista) {
-    showToast('Preencha nome e documento antes de salvar.', 'warning');
-    return;
-  }
-  try {
-    localStorage.setItem(KEY_CALC, JSON.stringify(dados));
-    showToast('✓ Dados do calculista salvos no navegador');
-    recolherCalculista();
-  } catch (e) {
-    showToast('Não consegui salvar (localStorage bloqueado).', 'warning');
-  }
-}
-
-function carregarCalculista() {
-  try {
-    const raw = localStorage.getItem(KEY_CALC);
-    if (!raw) return;
-    const dados = JSON.parse(raw);
-    CAMPOS_CALCULISTA.forEach(id => escreverCampo(id, dados[id]));
-    if (dados.nome_calculista) recolherCalculista();
-  } catch (e) { console.warn('Erro ao ler calculista:', e); }
-}
-
-function recolherCalculista() {
-  const nome = lerCampo('nome_calculista');
-  if (!nome) return;
-  $('calc-resumo-nome').textContent = nome;
-  $('calculista-expanded').classList.add('hidden');
-  $('calculista-collapsed').classList.remove('hidden');
-  $('calculista-collapsed').classList.add('flex');
-}
-
-function expandirCalculista() {
-  $('calculista-expanded').classList.remove('hidden');
-  $('calculista-collapsed').classList.add('hidden');
-  $('calculista-collapsed').classList.remove('flex');
-}
-
-function salvarNoHistorico(dadosCompletos, valorFinal) {
-  let hist = [];
-  try {
-    const raw = localStorage.getItem(KEY_HIST);
-    if (raw) hist = JSON.parse(raw);
-  } catch (e) { hist = []; }
-  hist.unshift({
-    timestamp: Date.now(),
-    data_str: new Date().toLocaleDateString('pt-BR'),
-    reclamante: dadosCompletos.reclamante,
-    reclamada: dadosCompletos.reclamada,
-    valor: valorFinal,
-    dados_completos: dadosCompletos
-  });
-  hist = hist.slice(0, 10);
-  try {
-    localStorage.setItem(KEY_HIST, JSON.stringify(hist));
-  } catch (e) {}
-  renderHistorico();
-}
-
-function renderHistorico() {
-  let hist = [];
-  try {
-    const raw = localStorage.getItem(KEY_HIST);
-    if (raw) hist = JSON.parse(raw);
-  } catch (e) { hist = []; }
-  if (hist.length === 0) {
-    $('historico-lista').innerHTML = '<div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>';
-    return;
-  }
-  $('historico-lista').innerHTML = hist.map((h, idx) => `
-    <button data-idx="${idx}" class="hist-item w-full text-left bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-border hover:border-arsenal-cyan/40 rounded-lg p-3 transition">
-      <div class="flex justify-between items-baseline">
-        <div class="text-arsenal-muted text-xs">${h.data_str}</div>
-        <div class="text-arsenal-cyan font-bold tabular-nums text-sm">${fmtBRL.format(h.valor)}</div>
-      </div>
-      <div class="text-arsenal-text text-sm mt-1 truncate">${h.reclamante || '—'} <span class="text-arsenal-muted">vs</span> ${h.reclamada || '—'}</div>
-    </button>
-  `).join('');
-  document.querySelectorAll('.hist-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const idx = Number(btn.dataset.idx);
-      const item = hist[idx];
-      if (item && item.dados_completos) {
-        repopularDoHistorico(item.dados_completos);
-        showToast('✓ Dados carregados do histórico');
+    let categoria = '', endereco = '', telefone = '';
+    for (const p of pedacos) {
+      if (!telefone) {
+        const tel = extrairTel(p);
+        if (tel) { telefone = tel; continue; }
       }
+      if (/^(open|closed|closes|opens|aberto|fechado|abre|fecha|temporarily|temporariamente|24 hours)/i.test(p)) continue;
+      if (/^(av\.?|avenida|r\.?|rua|tv\.?|travessa|trav\.?|al\.?|alameda|pç\.?|praça|praca|estr\.?|estrada|rod\.?|rodovia|prédio|predio|edifício|edificio|esq\.?|largo|lg\.?)\s/i.test(p)) {
+        if (!endereco) endereco = p; else endereco += ', ' + p;
+        continue;
+      }
+      if (/^(entrada |esquina |esq\. |altos|sala |piso |sl\. )/i.test(p)) {
+        if (endereco) endereco += ' - ' + p;
+        continue;
+      }
+      if (!categoria && p.length < 60) { categoria = p; continue; }
+      if (endereco && p.length > 5) endereco += ', ' + p;
+    }
+
+    cards.push({
+      nome, telefone, rating, reviews, categoria, endereco,
+      ctx: `${nome} ${categoria} ${blocoExtra.join(' ')}`,
     });
-  });
-}
-
-function repopularDoHistorico(dados) {
-  CAMPOS_PROCESSO.forEach(id => {
-    if (dados[id] !== undefined) escreverCampo(id, dados[id]);
-  });
-  valorOverride = null;
-  $('valor_override').value = '';
-  $('override-section').classList.add('hidden');
-  atualizarResumo();
-}
-
-// =========================================================================
-// LINK COMPARTILHÁVEL
-// =========================================================================
-
-function gerarLink() {
-  const dados = lerInputsProcesso();
-  const json = JSON.stringify(dados);
-  const b64 = btoa(unescape(encodeURIComponent(json)));
-  const url = `${location.origin}${location.pathname}?d=${b64}`;
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(url).then(
-      () => showToast('🔗 Link copiado'),
-      () => prompt('Copie o link manualmente:', url)
-    );
-  } else {
-    prompt('Copie o link manualmente:', url);
   }
+  // Deduplicar por nome
+  const vistos = new Set();
+  return cards.filter(c => {
+    const k = c.nome.toLowerCase().trim();
+    if (vistos.has(k)) return false;
+    vistos.add(k);
+    return true;
+  });
 }
 
-function carregarDeURL() {
-  const params = new URLSearchParams(location.search);
-  const d = params.get('d');
-  if (!d) return;
+// Detector de tipo (score-based, com vocabulário Maps EN + PT)
+function detectTipo(ctx) {
+  const t = (ctx || '').toLowerCase();
+  let s = { advocacia: 0, contabilidade: 0, sindicato: 0 };
+
+  // Sindicato
+  if (/\bsindicato\b/.test(t)) s.sindicato += 10;
+  if (/\bsind\.?\b/.test(t)) s.sindicato += 8;
+  if (/\blabor union\b/.test(t)) s.sindicato += 12;
+  if (/\bunion\b/.test(t)) s.sindicato += 8;
+  if (/\bfederação\b/.test(t)) s.sindicato += 6;
+  if (/\bsescon\b/.test(t)) s.sindicato += 10;
+  if (/\bsinscon\b/.test(t)) s.sindicato += 10;
+  if (/\bsintraj/.test(t)) s.sindicato += 10;
+  if (/\bsinprosan\b/.test(t)) s.sindicato += 10;
+  if (/\bsintepp\b/.test(t)) s.sindicato += 10;
+  if (/\bsintesp\b/.test(t)) s.sindicato += 10;
+  if (/\bsetrans\b/.test(t)) s.sindicato += 8;
+  if (/\bsinpro\b/.test(t)) s.sindicato += 10;
+  if (/\bsindsaúde\b|\bsindsaude\b/.test(t)) s.sindicato += 10;
+  if (/\bsimpi\b/.test(t)) s.sindicato += 10;
+  if (/\bsttr\b/.test(t)) s.sindicato += 10;
+  if (/\bfetagri/.test(t)) s.sindicato += 10;
+  if (/colônia de pescador|colonia de pescador/.test(t)) s.sindicato += 8;
+
+  // Contabilidade
+  if (/contabilidade/.test(t)) s.contabilidade += 10;
+  if (/contábil/.test(t)) s.contabilidade += 8;
+  if (/contabil(?!idade)/.test(t)) s.contabilidade += 6;
+  if (/\bcontador/.test(t)) s.contabilidade += 8;
+  if (/escritório de contabilidade/.test(t)) s.contabilidade += 12;
+  if (/\baccounting firm\b/.test(t)) s.contabilidade += 12;
+  if (/\baccountant\b/.test(t)) s.contabilidade += 10;
+  if (/\baccounting\b/.test(t)) s.contabilidade += 8;
+  if (/certified public accountant/.test(t)) s.contabilidade += 12;
+  if (/bookkeeping/.test(t)) s.contabilidade += 10;
+  if (/assessoria contábil/.test(t)) s.contabilidade += 10;
+  if (/assessoria fiscal/.test(t)) s.contabilidade += 8;
+  if (/\bauditor\b/.test(t)) s.contabilidade += 6;
+
+  // Advocacia
+  if (/advocacia/.test(t)) s.advocacia += 10;
+  if (/\badvogad[oa]/.test(t)) s.advocacia += 8;
+  if (/escritório de advocacia/.test(t)) s.advocacia += 12;
+  if (/\boab\b/.test(t)) s.advocacia += 8;
+  if (/\blaw firm\b/.test(t)) s.advocacia += 10;
+  if (/\blawyer\b/.test(t)) s.advocacia += 10;
+  if (/\battorney\b/.test(t)) s.advocacia += 10;
+  if (/\bbarrister\b/.test(t)) s.advocacia += 10;
+  if (/legal services/.test(t)) s.advocacia += 10;
+  if (/employment attorney/.test(t)) s.advocacia += 12;
+  if (/labor relations attorney/.test(t)) s.advocacia += 12;
+  if (/family law attorney/.test(t)) s.advocacia += 10;
+  if (/social security attorney/.test(t)) s.advocacia += 10;
+  if (/sociedade de advogados|sociedade individual de advocacia/.test(t)) s.advocacia += 12;
+
+  const max = Math.max(s.advocacia, s.contabilidade, s.sindicato);
+  if (max === 0) return 'advocacia';
+  if (s.sindicato === max) return 'sindicato';
+  if (s.contabilidade === max) return 'contabilidade';
+  return 'advocacia';
+}
+
+function limparTel(tel) {
+  if (!tel) return '';
+  const n = tel.replace(/\D/g,'');
+  return n.length >= 10 ? '55' + n.slice(-11) : '';
+}
+
+// ---- LOCALSTORAGE ----
+let contatos = [], nomeCalc = '', cidadeCalc = '';
+
+function salvar() {
+  try { localStorage.setItem('elp_nome', nomeCalc); localStorage.setItem('elp_cidade', cidadeCalc); } catch(e) {}
+}
+
+function carregar() {
   try {
-    const json = decodeURIComponent(escape(atob(d)));
-    const dados = JSON.parse(json);
-    CAMPOS_PROCESSO.forEach(id => {
-      if (dados[id] !== undefined) escreverCampo(id, dados[id]);
-    });
-  } catch (e) { console.warn('Erro ao decodificar link:', e); }
+    const n = localStorage.getItem('elp_nome');
+    const c = localStorage.getItem('elp_cidade');
+    if (n) document.getElementById('nome-calc').value = n;
+    if (c) document.getElementById('cidade-calc').value = c;
+  } catch(e) {}
 }
 
-// =========================================================================
-// CARREGAMENTO DO TEMPLATE
-// =========================================================================
+function getEnviados() { try { return new Set(JSON.parse(localStorage.getItem('elp_enviados')||'[]')); } catch(e) { return new Set(); } }
 
-async function carregarBufferTemplate() {
-  // Modo standalone: usa base64 embutido se a constante existir
-  if (typeof TEMPLATE_DOCX_BASE64 !== 'undefined') {
-    const binaryString = atob(TEMPLATE_DOCX_BASE64);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-    return bytes;
-  }
-  // Modo produção: faz fetch do template.docx ao lado do index.html
-  const response = await fetch('template.docx');
-  if (!response.ok) {
-    throw new Error('Não consegui carregar o template.docx (HTTP ' + response.status + ')');
-  }
-  const buffer = await response.arrayBuffer();
-  return new Uint8Array(buffer);
+// ---- PROCESSAR ----
+function processar() {
+  nomeCalc = document.getElementById('nome-calc').value.trim();
+  cidadeCalc = document.getElementById('cidade-calc').value.trim();
+  const texto = document.getElementById('texto-maps').value.trim();
+  if (!nomeCalc) { alert('Informe seu nome.'); return; }
+  if (!cidadeCalc) { alert('Informe a cidade.'); return; }
+  if (!texto) { alert('Cole o texto do Google Maps.'); return; }
+  salvar();
+
+  const enviados = getEnviados();
+  const parsed = parsear(texto);
+  if (!parsed.length) { alert('Não encontrei contatos. Verifique o texto colado.'); return; }
+
+  contatos = parsed.map((c, idx) => {
+    const tipo = detectTipo(c.ctx);
+    const tel = limparTel(c.telefone);
+    const obj = { ...c, tipo, nomeCalc, cidade: cidadeCalc, tel };
+    const msg = gerarMsg(obj, idx);
+    const link = tel ? `https://wa.me/${tel}?text=${encodeURIComponent(msg)}` : '';
+    return { nome: c.nome, tipo, telefone: c.telefone, tel, link, msg, rating: c.rating, reviews: c.reviews, categoria: c.categoria || '', endereco: c.endereco || '', ctx: c.ctx, idx, enviado: enviados.has(c.nome.toLowerCase()) };
+  });
+
+  document.getElementById('tot-contatos').textContent = contatos.length;
+  document.getElementById('tot-com-tel').textContent = contatos.filter(c=>c.telefone).length;
+  document.getElementById('tot-dias').textContent = Math.ceil(contatos.length/20);
+
+  // Métrica de variação: amostra dinâmica conforme total
+  const amostraN = Math.min(contatos.length, 50);
+  const amostraMsgs = contatos.slice(0, amostraN).map(c => c.msg);
+  const unicas = new Set(amostraMsgs).size;
+  document.getElementById('tot-uniq').textContent = unicas + '/' + amostraN;
+
+  renderizarPreview();
+  document.getElementById('tela1').classList.add('hidden');
+  document.getElementById('tela2').classList.remove('hidden');
 }
 
-// =========================================================================
-// GERAÇÃO DO .DOCX
-// =========================================================================
+function renderizarPreview() {
+  const TL = {advocacia:'Advocacia',contabilidade:'Contabilidade',sindicato:'Sindicato'};
+  const TC = {advocacia:'var(--cyan)',contabilidade:'var(--green)',sindicato:'var(--red)'};
+  const tbody = document.getElementById('preview-body');
+  tbody.innerHTML = '';
 
-async function gerarDocx() {
-  $('erro-geracao').classList.add('hidden');
-
-  // Verificar libs
-  if (typeof PizZip === 'undefined') {
-    mostrarErro('Biblioteca PizZip não carregou. Verifique sua conexão com a internet (precisa de internet só pra primeiro carregamento).');
-    return;
-  }
-  if (typeof docxtemplater === 'undefined') {
-    mostrarErro('Biblioteca docxtemplater não carregou. Verifique sua conexão com a internet.');
-    return;
-  }
-  if (typeof saveAs === 'undefined') {
-    mostrarErro('Biblioteca FileSaver não carregou. Verifique sua conexão com a internet.');
-    return;
-  }
-
-  const inputs = lerTodosInputs();
-  const { total } = calcular(inputs);
-  const valorFinal = valorOverride !== null ? valorOverride : total;
-
-  // Data por extenso
-  let dataExtenso = '';
-  if (inputs.data_proposta) {
-    const [ano, mes, dia] = inputs.data_proposta.split('-').map(Number);
-    if (ano && mes && dia) {
-      const d = new Date(ano, mes - 1, dia);
-      dataExtenso = fmtDataExtenso.format(d);
-    }
-  }
-
-  const dados = {
-    numero_processo: inputs.numero_processo || '',
-    reclamante: inputs.reclamante || '',
-    reclamada: inputs.reclamada || '',
-    nome_advogado: inputs.nome_advogado || '',
-    representando: inputs.representando || 'Reclamante',
-    valor_consultoria: fmtBRLNum.format(valorFinal),
-    data_proposta: dataExtenso,
-    nome_calculista: inputs.nome_calculista || '',
-    documento_calculista: inputs.documento_calculista || '',
-  };
-
-  try {
-    const bytes = await carregarBufferTemplate();
-    const zip = new PizZip(bytes);
-    const doc = new docxtemplater(zip, {
-      paragraphLoop: true,
-      linebreaks: true,
-      delimiters: { start: '{', end: '}' }
-    });
-    doc.render(dados);
-    const blob = doc.getZip().generate({
-      type: 'blob',
-      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    });
-    const filename = `Proposta - ${inputs.reclamante} vs ${inputs.reclamada}.docx`;
-    saveAs(blob, filename);
-    salvarNoHistorico(inputs, valorFinal);
-    showToast('✓ Proposta gerada — valor: ' + fmtBRL.format(valorFinal));
-  } catch (err) {
-    console.error('Erro ao gerar:', err);
-    let msg = err.message || String(err);
-    if (err.properties && err.properties.errors) {
-      msg += '\n— ' + err.properties.errors.map(e => e.message).join('\n— ');
-    }
-    mostrarErro('Erro ao gerar: ' + msg);
-  }
-}
-
-function mostrarErro(msg) {
-  const el = $('erro-geracao');
-  el.textContent = msg;
-  el.classList.remove('hidden');
-}
-
-// =========================================================================
-// TOAST
-// =========================================================================
-
-function showToast(msg, tipo = 'success') {
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.remove('hidden');
-  if (tipo === 'warning') {
-    t.classList.remove('bg-arsenal-cyan', 'text-arsenal-bg');
-    t.classList.add('bg-arsenal-warning', 'text-arsenal-bg');
-  } else {
-    t.classList.add('bg-arsenal-cyan', 'text-arsenal-bg');
-    t.classList.remove('bg-arsenal-warning');
-  }
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
-}
-
-// =========================================================================
-// SETUP
-// =========================================================================
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Data padrão
-  const hoje = new Date();
-  $('data_proposta').value = hoje.toISOString().split('T')[0];
-
-  // Carregar dados
-  carregarCalculista();
-  carregarDeURL();
-  renderHistorico();
-
-  // Recalcular em qualquer mudança (exceto valor_override que tem listener próprio)
-  document.querySelectorAll('input, select').forEach(el => {
-    if (el.id === 'valor_override') return;
-    el.addEventListener('input', atualizarResumo);
-    el.addEventListener('change', atualizarResumo);
+  contatos.slice(0,10).forEach((c, i) => {
+    const tr = document.createElement('tr');
+    if (c.enviado) tr.style.opacity='0.4';
+    tr.innerHTML = `
+      <td style="font-weight:600;min-width:160px">${c.nome}${c.enviado?' <span style="color:var(--yellow);font-size:10px">[enviado]</span>':''}${c.rating?' <span style="color:var(--muted);font-size:10px">⭐'+c.rating+'</span>':''}</td>
+      <td>
+        <select data-idx="${i}" class="tipo-select" style="background:var(--bg);color:${TC[c.tipo]};border:1px solid var(--border2);border-radius:3px;padding:4px 6px;font-family:Rajdhani,sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">
+          <option value="advocacia" ${c.tipo==='advocacia'?'selected':''}>Advocacia</option>
+          <option value="contabilidade" ${c.tipo==='contabilidade'?'selected':''}>Contabilidade</option>
+          <option value="sindicato" ${c.tipo==='sindicato'?'selected':''}>Sindicato</option>
+        </select>
+      </td>
+      <td style="color:var(--cyan);white-space:nowrap">${c.telefone||'<span style="color:var(--muted)">sem tel</span>'}</td>
+      <td>${c.link?'<a href="'+c.link+'" target="_blank" style="color:var(--green);font-size:12px">Abrir WhatsApp</a>':'<span style="color:var(--muted);font-size:11px">sem tel</span>'}</td>
+      <td style="max-width:240px;color:var(--muted);font-size:11px">${c.msg.substring(0,90)}...</td>`;
+    tbody.appendChild(tr);
   });
 
-  // Botões
-  $('btn-salvar-calculista').addEventListener('click', salvarCalculista);
-  $('btn-editar-calculista').addEventListener('click', expandirCalculista);
-  $('btn-gerar').addEventListener('click', gerarDocx);
-  $('btn-copiar-link').addEventListener('click', gerarLink);
+  if (contatos.length > 10) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="5" style="text-align:center;color:var(--muted);font-size:12px;padding:12px">... e mais ${contatos.length-10} contatos na planilha</td>`;
+    tbody.appendChild(tr);
+  }
 
-  // Override manual
-  $('btn-toggle-override').addEventListener('click', () => {
-    const sec = $('override-section');
-    if (sec.classList.contains('hidden')) {
-      sec.classList.remove('hidden');
-      const { total } = calcular(lerTodosInputs());
-      $('valor_override').value = fmtBRLNum.format(total);
-      valorOverride = total;
-      atualizarResumo();
-      $('valor_override').focus();
-      $('valor_override').select();
-    } else {
-      sec.classList.add('hidden');
-      valorOverride = null;
-      $('valor_override').value = '';
-      atualizarResumo();
-    }
-  });
-
-  $('valor_override').addEventListener('input', (e) => {
-    const v = parseValorBR(e.target.value);
-    valorOverride = v;
-    atualizarResumo();
-  });
-  $('valor_override').addEventListener('blur', (e) => {
-    // Reformatar quando perde foco, se valor válido
-    const v = parseValorBR(e.target.value);
-    if (v !== null) e.target.value = fmtBRLNum.format(v);
-  });
-
-  $('btn-resetar-override').addEventListener('click', () => {
-    valorOverride = null;
-    $('valor_override').value = '';
-    $('override-section').classList.add('hidden');
-    atualizarResumo();
-  });
-
-  // Tooltips: suporte a click pra mobile
-  document.querySelectorAll('.tooltip-trigger').forEach(t => {
-    t.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const content = t.parentElement.querySelector('.tooltip-content');
-      const wasShown = content.classList.contains('shown');
-      document.querySelectorAll('.tooltip-content.shown').forEach(c => c.classList.remove('shown'));
-      if (!wasShown) content.classList.add('shown');
+  // Listeners para troca de tipo: regenera mensagem e link
+  document.querySelectorAll('.tipo-select').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      const i = parseInt(e.target.dataset.idx);
+      const novoTipo = e.target.value;
+      contatos[i].tipo = novoTipo;
+      const obj = { ...contatos[i], tipo: novoTipo, nomeCalc, cidade: cidadeCalc };
+      contatos[i].msg = gerarMsg(obj, contatos[i].idx);
+      if (contatos[i].tel) {
+        contatos[i].link = `https://wa.me/${contatos[i].tel}?text=${encodeURIComponent(contatos[i].msg)}`;
+      }
+      // Atualizar métrica de únicas
+      const amostraN = Math.min(contatos.length, 50);
+      const unicas = new Set(contatos.slice(0, amostraN).map(c => c.msg)).size;
+      document.getElementById('tot-uniq').textContent = unicas + '/' + amostraN;
+      renderizarPreview();
     });
   });
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.tooltip-content.shown').forEach(c => c.classList.remove('shown'));
-  });
+}
 
-  atualizarResumo();
-});
+// ---- EXCEL ----
+function baixarExcel() {
+  const data = new Date().toISOString().slice(0,10);
+  const TL = {advocacia:'Advocacia',contabilidade:'Contabilidade',sindicato:'Sindicato'};
+  const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="UTF-8"><style>
+td,th{font-family:Arial;font-size:10pt;vertical-align:top;padding:4px 8px;border:1px solid #ccc}
+th{font-weight:bold;background:#1a3a6b;color:white}
+.msg{white-space:pre-wrap}
+tr:nth-child(even) td{background:#f0f4ff}
+</style></head><body>`;
+
+  html += `<table><thead><tr><th>Nome</th><th>Tipo</th><th>Categoria (Maps)</th><th>Endereço</th><th>Telefone</th><th>WhatsApp</th><th>Mensagem SPIN</th><th>Avaliação</th></tr></thead><tbody>`;
+  contatos.forEach(c => {
+    html += `<tr>
+      <td>${esc(c.nome)}</td>
+      <td>${TL[c.tipo]||''}</td>
+      <td>${esc(c.categoria)}</td>
+      <td>${esc(c.endereco)}</td>
+      <td>${esc(c.telefone)}</td>
+      <td>${c.link?`<a href="${c.link}">Abrir WhatsApp</a>`:''}</td>
+      <td class="msg">${esc(c.msg)}</td>
+      <td>${esc(c.rating)}</td></tr>`;
+  });
+  html += `</tbody></table><br>`;
+
+  html += `<table><thead><tr><th>Nome</th><th>Tipo</th><th>Telefone</th><th>Dia</th><th>Data Envio</th><th>Status</th><th>Observações</th></tr></thead><tbody>`;
+  contatos.forEach((c,i) => {
+    html += `<tr><td>${esc(c.nome)}</td><td>${TL[c.tipo]||''}</td><td>${esc(c.telefone)}</td><td>${Math.floor(i/20)+1}</td><td></td><td>Pendente</td><td></td></tr>`;
+  });
+  html += `</tbody></table></body></html>`;
+
+  const blob = new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `Prospeccao_${cidadeCalc.replace(/\s/g,'_')}_${data}.xls`;
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function voltarInicio() {
+  document.getElementById('tela2').classList.add('hidden');
+  document.getElementById('tela1').classList.remove('hidden');
+  contatos = [];
+}
+
+window.addEventListener('DOMContentLoaded', carregar);
 </script>
-
 </body>
 </html>
