@@ -3,477 +3,910 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arsenal Cálculo 200 — Calculadora de Honorários</title>
+<title>Arsenal Calculo 200 - Calculadora de Honorarios</title>
 
-<!-- Google Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<!-- Tailwind config (DEVE vir antes do CDN) -->
-<script>
-  tailwind = { config: {
-    theme: {
-      extend: {
-        colors: {
-          'arsenal-bg':       '#070B0B',
-          'arsenal-surface':  '#0E1616',
-          'arsenal-surface2': '#142020',
-          'arsenal-border':   '#1E3030',
-          'arsenal-cyan':     '#2DFFD4',
-          'arsenal-cyan-dim': '#14998A',
-          'arsenal-text':     '#E6F7F2',
-          'arsenal-muted':    '#7A9994',
-          'arsenal-warning':  '#FFB84D',
-        },
-        fontFamily: {
-          'display': ['"Space Grotesk"', 'sans-serif'],
-          'sans':    ['Inter', 'system-ui', 'sans-serif'],
-        },
-        boxShadow: {
-          'glow':         '0 0 20px rgba(45, 255, 212, 0.25)',
-          'glow-strong':  '0 0 30px rgba(45, 255, 212, 0.45)',
-        }
-      }
-    }
-  }};
-</script>
-<script src="https://cdn.tailwindcss.com"></script>
-
-<!-- Bibliotecas para gerar o .docx (usando jsdelivr — mais permissivo p/ file://) -->
 <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.6/dist/pizzip.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.50.0/build/docxtemplater.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
 <style>
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background-color: #070B0B;
-    background-image:
-      linear-gradient(rgba(45,255,212,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(45,255,212,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    color: #E6F7F2;
-  }
-  .font-display { font-family: 'Space Grotesk', sans-serif; }
-  .glow-text { text-shadow: 0 0 20px rgba(45, 255, 212, 0.6); }
+:root {
+  /* OKLCH paleta, hue 215 (azul oceano), neutros tintados */
+  --bg:           oklch(0.98 0.005 215);
+  --surface:      oklch(0.995 0.003 215);
+  --surface-2:    oklch(0.965 0.007 215);
+  --border:       oklch(0.90 0.012 215);
+  --border-soft:  oklch(0.94 0.008 215);
+  --text:         oklch(0.22 0.025 215);
+  --text-muted:   oklch(0.48 0.020 215);
+  --text-soft:    oklch(0.65 0.015 215);
 
-  /* Toggle switch */
-  .toggle-track {
-    width: 2.75rem; height: 1.5rem;
-    background: #142020;
-    border: 1px solid #1E3030;
-    border-radius: 9999px;
-    position: relative;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .toggle-track::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 18px; height: 18px;
-    background: #7A9994;
-    border-radius: 9999px;
-    transition: all 0.2s;
-  }
-  input[type="checkbox"]:checked + .toggle-track {
-    background: #2DFFD4;
-    border-color: #2DFFD4;
-    box-shadow: 0 0 12px rgba(45,255,212,0.45);
-  }
-  input[type="checkbox"]:checked + .toggle-track::after {
-    transform: translateX(20px);
-    background: #070B0B;
-  }
+  --primary:       oklch(0.45 0.130 215);
+  --primary-deep:  oklch(0.38 0.135 215);
+  --primary-soft:  oklch(0.58 0.110 215);
+  --primary-tint:  oklch(0.94 0.030 215);
+  --on-primary:    oklch(0.99 0.005 215);
 
-  /* Inputs */
-  .input-arsenal {
-    background: #142020;
-    border: 1px solid #1E3030;
-    border-radius: 0.5rem;
-    padding: 0.625rem 1rem;
-    color: #E6F7F2;
-    width: 100%;
-    transition: all 0.15s;
-    font-family: 'Inter', sans-serif;
-  }
-  .input-arsenal:focus {
-    outline: none;
-    border-color: #2DFFD4;
-    box-shadow: 0 0 0 3px rgba(45,255,212,0.15);
-  }
-  .input-arsenal::placeholder { color: #4A6661; }
+  --ok:        oklch(0.55 0.140 155);
+  --ok-tint:   oklch(0.96 0.028 155);
+  --warn:      oklch(0.68 0.140 70);
+  --warn-tint: oklch(0.96 0.035 75);
 
-  .label-arsenal {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #7A9994;
-    font-weight: 500;
-    margin-bottom: 0.375rem;
-    display: block;
-  }
+  --radius-sm: 6px;
+  --radius:    10px;
+  --radius-lg: 14px;
 
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-  input[type=number] { -moz-appearance: textfield; }
+  --shadow-1: 0 1px 2px oklch(0.20 0.02 215 / 0.04);
+  --shadow-2: 0 8px 32px oklch(0.20 0.02 215 / 0.07);
 
-  input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.7) sepia(1) saturate(5) hue-rotate(120deg);
-    cursor: pointer;
-  }
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+}
 
-  /* Tooltip */
-  .tooltip-wrapper { position: relative; display: inline-flex; align-items: center; }
-  .tooltip-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px; height: 18px;
-    border-radius: 9999px;
-    background: #142020;
-    border: 1px solid #14998A;
-    color: #14998A;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: help;
-    margin-left: 6px;
-    transition: all 0.15s;
-    user-select: none;
-  }
-  .tooltip-trigger:hover { background: #2DFFD4; color: #070B0B; border-color: #2DFFD4; }
-  .tooltip-content {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 0;
-    background: #0E1616;
-    border: 1px solid #2DFFD4;
-    color: #E6F7F2;
-    padding: 10px 12px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    font-weight: normal;
-    line-height: 1.4;
-    width: 260px;
-    text-align: left;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s;
-    z-index: 50;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5), 0 0 20px rgba(45,255,212,0.15);
-  }
-  .tooltip-wrapper:hover .tooltip-content,
-  .tooltip-content.shown { opacity: 1; pointer-events: auto; }
-  /* Setinha do tooltip */
-  .tooltip-content::after {
-    content: '';
-    position: absolute;
-    top: 100%; left: 12px;
-    border: 6px solid transparent;
-    border-top-color: #2DFFD4;
-  }
+* { box-sizing: border-box; }
 
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-  .fade-in { animation: fadeIn 0.2s ease-out; }
+html, body { margin: 0; padding: 0; }
+
+body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-7) var(--space-5) var(--space-6);
+}
+
+/* ---------- Header: tipografia faz o trabalho, sem hero ---------- */
+header {
+  margin-bottom: var(--space-7);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-soft);
+}
+.eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: var(--space-3);
+}
+header h1 {
+  margin: 0 0 var(--space-2);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  line-height: 1.1;
+}
+header h1 .accent { color: var(--primary); font-weight: 700; }
+header .sub {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  max-width: 56ch;
+}
+
+/* ---------- Layout principal: assimetrico ---------- */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+  gap: var(--space-7);
+  align-items: start;
+}
+@media (max-width: 960px) {
+  .layout { grid-template-columns: 1fr; gap: var(--space-5); }
+}
+
+.col-form { display: flex; flex-direction: column; gap: var(--space-6); }
+.col-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  position: sticky;
+  top: var(--space-5);
+}
+@media (max-width: 960px) {
+  .col-side { position: static; }
+}
+
+/* ---------- Sections: sem cards uniformes. Rhythm via spacing ---------- */
+section { display: block; }
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-soft);
+}
+.section-head h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.section-head .hint {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.section-head .ok-flag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ok);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ---------- Forms ---------- */
+.field-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4) var(--space-5);
+}
+.field-grid.cols-1 { grid-template-columns: 1fr; }
+@media (max-width: 600px) {
+  .field-grid { grid-template-columns: 1fr; }
+}
+
+.field { display: flex; flex-direction: column; gap: var(--space-1); }
+.field.full { grid-column: 1 / -1; }
+
+.field label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"],
+select {
+  font: 500 14px/1.4 "Inter", sans-serif;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color .15s ease-out, box-shadow .15s ease-out;
+  width: 100%;
+}
+input[type="number"] { font-variant-numeric: tabular-nums; }
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-soft);
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+input::placeholder { color: var(--text-soft); font-weight: 400; }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type=number] { -moz-appearance: textfield; }
+
+.divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: var(--space-3) 0;
+}
+
+/* ---------- Toggles ---------- */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-2) 0;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+.toggle-row + .toggle-row {
+  border-top: 1px solid var(--border-soft);
+}
+.toggle-row .text {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--text);
+}
+.toggle-row .sub-text {
+  color: var(--text-soft);
+  font-size: 13px;
+  margin-left: var(--space-1);
+  font-weight: 400;
+}
+
+.toggle-track {
+  width: 38px; height: 22px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  position: relative;
+  transition: background .15s ease-out, border-color .15s ease-out;
+  flex-shrink: 0;
+}
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 16px; height: 16px;
+  background: var(--text-soft);
+  border-radius: 999px;
+  transition: transform .18s cubic-bezier(0.22, 1, 0.36, 1), background .15s ease-out;
+}
+input[type="checkbox"]:checked + .toggle-track {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+input[type="checkbox"]:checked + .toggle-track::after {
+  transform: translateX(16px);
+  background: var(--on-primary);
+}
+input[type="checkbox"]:focus-visible + .toggle-track {
+  box-shadow: 0 0 0 3px var(--primary-tint);
+}
+
+.toggle-stack { display: flex; flex-direction: column; }
+
+/* ---------- Tooltip ---------- */
+.tooltip-wrapper { position: relative; display: inline-flex; align-items: center; }
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: help;
+  margin-left: 6px;
+  transition: all .15s ease-out;
+  user-select: none;
+}
+.tooltip-trigger:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
+.tooltip-content {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: -8px;
+  background: var(--text);
+  color: var(--on-primary);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  width: 240px;
+  text-align: left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .15s ease-out;
+  z-index: 50;
+  box-shadow: var(--shadow-2);
+}
+.tooltip-wrapper:hover .tooltip-content,
+.tooltip-content.shown { opacity: 1; pointer-events: auto; }
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%; left: 14px;
+  border: 5px solid transparent;
+  border-top-color: var(--text);
+}
+
+/* ---------- Calculista colapsado ---------- */
+.calc-collapsed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--primary-tint);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-4);
+}
+.calc-collapsed .info { display: flex; align-items: baseline; gap: var(--space-3); }
+.calc-collapsed .lbl {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary-deep);
+  font-weight: 600;
+}
+.calc-collapsed .name { font-weight: 600; color: var(--text); font-size: 14px; }
+.link-btn {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background .12s ease-out;
+}
+.link-btn:hover { background: var(--surface-2); text-decoration: underline; }
+
+/* ---------- Buttons ---------- */
+button.btn {
+  font: 600 13px/1 "Inter", sans-serif;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s ease-out, border-color .15s ease-out, transform .08s ease-out;
+}
+button.btn:hover {
+  background: var(--surface-2);
+  border-color: var(--text-soft);
+}
+button.btn:active { transform: translateY(1px); }
+
+button.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+button.btn-primary:hover:not(:disabled) {
+  background: var(--primary-deep);
+  border-color: var(--primary-deep);
+}
+button.btn-primary:disabled {
+  background: var(--surface-2);
+  color: var(--text-soft);
+  border-color: var(--border);
+  cursor: not-allowed;
+}
+
+button.btn-ghost {
+  background: transparent;
+  border-color: var(--border-soft);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+button.btn-ghost:hover {
+  background: var(--surface-2);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+button.btn-block { width: 100%; }
+button.btn-lg { padding: 14px 20px; font-size: 14px; }
+
+/* ---------- Resumo (Total) ---------- */
+.summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-1);
+}
+
+.breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  margin-bottom: var(--space-4);
+}
+.breakdown .row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border-soft);
+}
+.breakdown .row:last-child { border-bottom: none; }
+.breakdown .row .label {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.breakdown .row .val {
+  font-weight: 600;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  font-size: 13px;
+}
+.breakdown .row.zero .label,
+.breakdown .row.zero .val { color: var(--text-soft); font-weight: 400; }
+.breakdown .row.included .label { color: var(--ok); font-weight: 600; }
+.breakdown .row.included .val {
+  font-style: italic;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ok);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Total: tipografia + cor, nada de bento metric box */
+.total-block {
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--text);
+}
+.total-block .lbl {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-1);
+}
+.total-block .val {
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--primary-deep);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  line-height: 1.1;
+}
+.total-block .override-note {
+  margin-top: var(--space-2);
+  font-size: 12px;
+  color: var(--warn);
+  font-weight: 500;
+}
+.total-block .override-note .strike {
+  color: var(--text-soft);
+  text-decoration: line-through;
+  font-weight: 400;
+}
+
+.override-section {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-soft);
+}
+.override-section .row {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+.override-section input { flex: 1; font-variant-numeric: tabular-nums; }
+
+.actions {
+  margin-top: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.notice {
+  margin-top: var(--space-2);
+  font-size: 12px;
+  color: var(--warn);
+  padding: 8px 12px;
+  background: var(--warn-tint);
+  border-radius: var(--radius-sm);
+}
+
+/* ---------- Historico ---------- */
+.history-section h2 {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 0 0 var(--space-3);
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid var(--border-soft);
+}
+.history-empty {
+  font-size: 12px;
+  color: var(--text-soft);
+  font-style: italic;
+  padding: var(--space-3) 0;
+}
+.history-list {
+  display: flex;
+  flex-direction: column;
+}
+.history-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-3) var(--space-2);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-soft);
+  transition: background .12s ease-out;
+}
+.history-item:hover { background: var(--surface-2); }
+.history-item:last-child { border-bottom: none; }
+.history-item .top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+.history-item .date {
+  font-size: 11px;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+.history-item .val {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+.history-item .parties {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.history-item .parties .vs {
+  color: var(--text-soft);
+  font-size: 12px;
+  margin: 0 6px;
+}
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  bottom: var(--space-5);
+  right: var(--space-5);
+  background: var(--text);
+  color: var(--on-primary);
+  font-weight: 500;
+  padding: 12px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  box-shadow: var(--shadow-2);
+  z-index: 100;
+  animation: toastIn .25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.toast.warn { background: var(--warn); color: var(--text); }
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- Footer ---------- */
+footer {
+  margin-top: var(--space-8);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-soft);
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.7;
+}
+footer p { margin: 0; }
+
+.hidden { display: none !important; }
+
+/* ---------- Date picker (light theme) ---------- */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4) sepia(1) saturate(2) hue-rotate(180deg);
+  cursor: pointer;
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 720px) {
+  .page { padding: var(--space-5) var(--space-4) var(--space-5); }
+  header h1 { font-size: 26px; }
+  header .sub { font-size: 14px; }
+  .total-block .val { font-size: 32px; }
+  .summary { padding: var(--space-5); }
+}
 </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-<div class="max-w-7xl mx-auto px-4 py-8 md:py-12">
+<div class="page">
 
-  <!-- Header -->
-  <header class="mb-10">
-    <div class="text-arsenal-cyan-dim text-xs uppercase tracking-[0.3em] font-semibold mb-2">▸ Arsenal Cálculo 200</div>
-    <h1 class="font-display font-bold text-3xl md:text-5xl text-arsenal-text">
-      Calculadora de <span class="text-arsenal-cyan glow-text">Honorários</span>
-    </h1>
-    <p class="text-arsenal-muted mt-2 text-sm md:text-base">Preencha os dados do processo e gere a proposta em formato Word</p>
-    <div class="mt-6 h-px bg-gradient-to-r from-arsenal-cyan/40 via-arsenal-cyan/10 to-transparent"></div>
+  <header>
+    <div class="eyebrow">Arsenal Calculo 200</div>
+    <h1>Calculadora de <span class="accent">Honorarios</span></h1>
+    <p class="sub">Preencha os dados do processo, confira o valor calculado em tempo real e baixe a proposta em Word.</p>
   </header>
 
-  <!-- Layout -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <div class="layout">
 
-    <!-- COLUNA ESQUERDA -->
-    <div class="space-y-6">
+    <div class="col-form">
 
       <!-- Calculista -->
-      <section id="card-calculista" class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
+      <section id="card-calculista">
         <div id="calculista-expanded">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm">◆ Dados do Calculista</h2>
-            <span id="calc-saved-flag" class="hidden text-arsenal-cyan text-xs">✓ Salvo</span>
+          <div class="section-head">
+            <h2>Dados do calculista</h2>
+            <span id="calc-saved-flag" class="ok-flag hidden">Salvo</span>
           </div>
 
-          <div class="space-y-4">
-            <div>
-              <label class="label-arsenal" for="nome_calculista">Seu nome</label>
-              <input type="text" id="nome_calculista" class="input-arsenal" placeholder="Ex: João Silva">
+          <div class="field-grid cols-1">
+            <div class="field">
+              <label for="nome_calculista">Seu nome</label>
+              <input type="text" id="nome_calculista" placeholder="Joao Silva">
             </div>
-            <div>
-              <label class="label-arsenal" for="documento_calculista">Seu documento (CPF, CNPJ ou OAB)</label>
-              <input type="text" id="documento_calculista" class="input-arsenal" placeholder="Ex: 123.456.789-00">
+            <div class="field">
+              <label for="documento_calculista">Seu documento (CPF, CNPJ ou OAB)</label>
+              <input type="text" id="documento_calculista" placeholder="123.456.789-00">
             </div>
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="label-arsenal" for="qtd_calculos_feitos">Cálculos já feitos</label>
-                <input type="number" id="qtd_calculos_feitos" class="input-arsenal" min="0" step="1" placeholder="0">
+            <div class="field-grid">
+              <div class="field">
+                <label for="qtd_calculos_feitos">Calculos ja feitos</label>
+                <input type="number" id="qtd_calculos_feitos" min="0" step="1" placeholder="0">
               </div>
-              <div class="flex flex-col justify-end">
-                <label class="label-arsenal">+10 nomeações?</label>
-                <label class="flex items-center gap-3 cursor-pointer pt-1">
-                  <input type="checkbox" id="mais_de_10_nomeacoes" class="sr-only">
-                  <span class="toggle-track"></span>
-                  <span class="text-sm text-arsenal-muted toggle-label">Não</span>
+              <div class="field">
+                <label>Mais de 10 nomeacoes?</label>
+                <label class="toggle-row" style="padding-top: 4px; padding-bottom: 0;">
+                  <span class="text">Sim, ja fui nomeado mais de 10x</span>
+                  <span style="display:inline-flex; align-items:center;">
+                    <input type="checkbox" id="mais_de_10_nomeacoes" style="position:absolute; opacity:0; pointer-events:none;">
+                    <span class="toggle-track"></span>
+                  </span>
                 </label>
               </div>
             </div>
-
-            <button id="btn-salvar-calculista" class="w-full bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-cyan/40 hover:border-arsenal-cyan text-arsenal-cyan font-display font-bold uppercase tracking-wider text-sm py-3 rounded-lg transition">
-              💾 Salvar dados do calculista
-            </button>
+            <div style="margin-top: var(--space-2);">
+              <button id="btn-salvar-calculista" class="btn btn-block">Salvar dados do calculista</button>
+            </div>
           </div>
         </div>
 
-        <div id="calculista-collapsed" class="hidden items-center justify-between">
-          <div class="flex items-center gap-3">
-            <span class="text-arsenal-cyan">✓</span>
-            <div>
-              <div class="text-arsenal-cyan-dim text-xs uppercase tracking-wider">Calculista</div>
-              <div id="calc-resumo-nome" class="font-medium"></div>
-            </div>
+        <div id="calculista-collapsed" class="calc-collapsed hidden">
+          <div class="info">
+            <span class="lbl">Calculista</span>
+            <span id="calc-resumo-nome" class="name"></span>
           </div>
-          <button id="btn-editar-calculista" class="text-arsenal-cyan text-sm hover:underline">[editar]</button>
+          <button id="btn-editar-calculista" class="link-btn">editar</button>
         </div>
       </section>
 
       <!-- Processo -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Dados do Processo</h2>
-        <div class="space-y-4">
+      <section>
+        <div class="section-head">
+          <h2>Dados do processo</h2>
+        </div>
 
-          <div>
-            <label class="label-arsenal" for="numero_processo">Número do processo</label>
-            <input type="text" id="numero_processo" class="input-arsenal" placeholder="0010234-12.2024.5.02.0716">
+        <div class="field-grid">
+          <div class="field full">
+            <label for="numero_processo">Numero do processo</label>
+            <input type="text" id="numero_processo" placeholder="0010234-12.2024.5.02.0716">
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="reclamante">Reclamante</label>
-              <input type="text" id="reclamante" class="input-arsenal" placeholder="Nome do reclamante">
-            </div>
-            <div>
-              <label class="label-arsenal" for="reclamada">Reclamada</label>
-              <input type="text" id="reclamada" class="input-arsenal" placeholder="Nome da empresa">
-            </div>
+          <div class="field">
+            <label for="reclamante">Reclamante</label>
+            <input type="text" id="reclamante" placeholder="Nome do reclamante">
+          </div>
+          <div class="field">
+            <label for="reclamada">Reclamada</label>
+            <input type="text" id="reclamada" placeholder="Nome da empresa">
           </div>
 
-          <div>
-            <label class="label-arsenal" for="nome_advogado">Destinatário do orçamento</label>
-            <input type="text" id="nome_advogado" class="input-arsenal" placeholder="Dr. Fulano de Tal">
+          <div class="field full">
+            <label for="nome_advogado">Destinatario do orcamento</label>
+            <input type="text" id="nome_advogado" placeholder="Dr. Fulano de Tal">
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="representando">Representando</label>
-              <select id="representando" class="input-arsenal">
-                <option value="Reclamante">Reclamante</option>
-                <option value="Reclamada">Reclamada</option>
-              </select>
-            </div>
-            <div>
-              <label class="label-arsenal" for="data_proposta">Data da proposta</label>
-              <input type="date" id="data_proposta" class="input-arsenal">
-            </div>
+          <div class="field">
+            <label for="representando">Representando</label>
+            <select id="representando">
+              <option value="Reclamante">Reclamante</option>
+              <option value="Reclamada">Reclamada</option>
+            </select>
           </div>
-
-          <div class="h-px bg-arsenal-border my-2"></div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="label-arsenal" for="anos_contrato">Anos de contrato</label>
-              <input type="number" id="anos_contrato" class="input-arsenal" min="0" step="1" placeholder="0">
-            </div>
-            <div>
-              <label class="label-arsenal" for="maior_remuneracao">Maior remuneração TRCT (R$)</label>
-              <input type="number" id="maior_remuneracao" class="input-arsenal" min="0" step="0.01" placeholder="0,00">
-            </div>
+          <div class="field">
+            <label for="data_proposta">Data da proposta</label>
+            <input type="date" id="data_proposta">
           </div>
+        </div>
 
-          <div class="space-y-3 pt-2">
+        <div class="divider"></div>
 
-            <!-- Urgência -->
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                É urgente? <span class="text-arsenal-muted ml-1">(≤ 2 dias úteis)</span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="urgente" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <!-- NOVO: Verbas indenizatórias e rescisórias (não altera valor) -->
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Verbas indenizatórias e rescisórias
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Indenização por danos morais, FGTS + 40%, verbas rescisórias e multas. Item básico — incluído sem alterar o valor.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="verbas_indenizatorias" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Apuração de verbas do contrato
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Verbas devidas mês a mês como diferença salarial, adicionais de periculosidade e insalubridade, comissões.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="apuracao_verbas" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Horas extras
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Apuração de verbas devidas pela jornada extraordinária.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="horas_extras" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Pensionamento vitalício
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Verbas devidas por pensionamento em caso de acidente.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="pensionamento_vitalicio" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Digitação de cartões de ponto
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Necessidade de digitação manual de cartões de ponto.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="digitacao_cartoes_ponto" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
-
-            <label class="flex items-center justify-between cursor-pointer">
-              <span class="text-sm flex items-center">
-                Digitação de contracheques
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-trigger" tabindex="0">?</span>
-                  <span class="tooltip-content">Necessidade de digitação manual de verbas do contracheque.</span>
-                </span>
-              </span>
-              <span class="flex items-center gap-3">
-                <input type="checkbox" id="digitacao_contracheques" class="sr-only">
-                <span class="toggle-track"></span>
-              </span>
-            </label>
+        <div class="field-grid">
+          <div class="field">
+            <label for="anos_contrato">Anos de contrato</label>
+            <input type="number" id="anos_contrato" min="0" step="1" placeholder="0">
           </div>
+          <div class="field">
+            <label for="maior_remuneracao">Maior remuneracao TRCT (R$)</label>
+            <input type="number" id="maior_remuneracao" min="0" step="0.01" placeholder="0,00">
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="toggle-stack">
+
+          <label class="toggle-row">
+            <span class="text">
+              E urgente?
+              <span class="sub-text">(2 dias uteis ou menos)</span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="urgente" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Verbas indenizatorias e rescisorias
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Indenizacao por danos morais, FGTS + 40%, verbas rescisorias e multas. Item basico, incluido sem alterar o valor.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="verbas_indenizatorias" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Apuracao de verbas do contrato
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Verbas devidas mes a mes como diferenca salarial, adicionais de periculosidade e insalubridade, comissoes.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="apuracao_verbas" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Horas extras
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Apuracao de verbas devidas pela jornada extraordinaria.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="horas_extras" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Pensionamento vitalicio
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Verbas devidas por pensionamento em caso de acidente.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="pensionamento_vitalicio" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Digitacao de cartoes de ponto
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Necessidade de digitacao manual de cartoes de ponto.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="digitacao_cartoes_ponto" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
+
+          <label class="toggle-row">
+            <span class="text">
+              Digitacao de contracheques
+              <span class="tooltip-wrapper">
+                <span class="tooltip-trigger" tabindex="0">?</span>
+                <span class="tooltip-content">Necessidade de digitacao manual de verbas do contracheque.</span>
+              </span>
+            </span>
+            <span style="display:inline-flex; align-items:center;">
+              <input type="checkbox" id="digitacao_contracheques" style="position:absolute; opacity:0; pointer-events:none;">
+              <span class="toggle-track"></span>
+            </span>
+          </label>
 
         </div>
       </section>
 
     </div>
 
-    <!-- COLUNA DIREITA -->
-    <div class="space-y-6 lg:sticky lg:top-6 lg:self-start">
+    <div class="col-side">
 
-      <!-- Resumo -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-5">◆ Resumo do Cálculo</h2>
+      <section class="summary">
+        <div class="section-head" style="padding: 0; border: none; margin-bottom: var(--space-4);">
+          <h2>Resumo do calculo</h2>
+        </div>
 
-        <div id="breakdown" class="space-y-2.5 text-sm tabular-nums"></div>
+        <div id="breakdown" class="breakdown"></div>
 
-        <div class="mt-5 pt-5 border-t-2 border-arsenal-border">
-          <div class="text-arsenal-muted uppercase text-xs tracking-wider mb-1">Total</div>
-          <div id="total-display" class="font-display font-bold text-4xl md:text-5xl text-arsenal-cyan glow-text tabular-nums">
-            R$ 0,00
-          </div>
-          <div id="aviso-override" class="hidden mt-2 text-xs text-arsenal-warning">
-            ⚠ Valor ajustado manualmente — original: <span id="valor-original-display"></span>
+        <div class="total-block">
+          <div class="lbl">Total proposto</div>
+          <div id="total-display" class="val">R$ 0,00</div>
+          <div id="aviso-override" class="override-note hidden">
+            Valor ajustado manualmente. Original: <span class="strike" id="valor-original-display"></span>
           </div>
         </div>
 
-        <!-- Override manual -->
-        <div class="mt-4">
-          <button id="btn-toggle-override" class="text-arsenal-cyan text-xs hover:underline">
-            ✎ Editar valor manualmente
-          </button>
-          <div id="override-section" class="hidden mt-3 fade-in">
-            <label class="label-arsenal">Valor final (R$) — pode usar vírgula ou ponto</label>
-            <div class="flex gap-2">
-              <input type="text" id="valor_override" class="input-arsenal tabular-nums" inputmode="decimal" placeholder="2.940,00">
-              <button id="btn-resetar-override" class="px-3 py-2 text-xs text-arsenal-muted hover:text-arsenal-cyan border border-arsenal-border rounded-lg whitespace-nowrap">Resetar</button>
+        <div class="override-section">
+          <button id="btn-toggle-override" class="link-btn" style="padding-left: 0;">Editar valor manualmente</button>
+          <div id="override-section" class="hidden">
+            <label style="font-size: 12px; color: var(--text-muted);">Valor final (R$). Aceita virgula ou ponto.</label>
+            <div class="row">
+              <input type="text" id="valor_override" inputmode="decimal" placeholder="2.940,00">
+              <button id="btn-resetar-override" class="btn btn-ghost">Resetar</button>
             </div>
           </div>
         </div>
 
-        <div class="mt-6 space-y-2">
-          <button id="btn-gerar" class="w-full bg-arsenal-cyan hover:bg-arsenal-cyan/90 text-arsenal-bg font-display font-bold uppercase tracking-wider px-6 py-4 rounded-lg shadow-glow hover:shadow-glow-strong transition disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none">
-            📥 Gerar Proposta .docx
-          </button>
-          <div id="aviso-validacao" class="hidden text-xs text-arsenal-warning">
-            Preencha os campos obrigatórios antes de gerar.
+        <div class="actions">
+          <button id="btn-gerar" class="btn btn-primary btn-block btn-lg">Gerar proposta em Word</button>
+          <div id="aviso-validacao" class="notice hidden">
+            Preencha os campos obrigatorios antes de gerar.
           </div>
-          <div id="erro-geracao" class="hidden text-xs text-arsenal-warning bg-arsenal-warning/10 border border-arsenal-warning/40 rounded p-2"></div>
-          <button id="btn-copiar-link" class="w-full bg-transparent border border-arsenal-border hover:border-arsenal-cyan text-arsenal-muted hover:text-arsenal-cyan text-sm py-2.5 rounded-lg transition">
-            🔗 Copiar link da proposta
-          </button>
+          <div id="erro-geracao" class="notice hidden"></div>
+          <button id="btn-copiar-link" class="btn btn-ghost btn-block">Copiar link da proposta</button>
         </div>
       </section>
 
-      <!-- Histórico -->
-      <section class="bg-arsenal-surface border border-arsenal-border rounded-xl p-6">
-        <h2 class="font-display font-bold text-arsenal-cyan uppercase tracking-wider text-sm mb-4">◆ Histórico (últimas 10)</h2>
-        <div id="historico-lista" class="space-y-2 text-sm">
-          <div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>
+      <section class="history-section">
+        <h2>Historico (ultimas 10)</h2>
+        <div id="historico-lista" class="history-list">
+          <div class="history-empty">Nenhuma proposta gerada ainda.</div>
         </div>
       </section>
 
     </div>
   </div>
 
-  <div id="toast" class="hidden fixed bottom-6 right-6 bg-arsenal-cyan text-arsenal-bg font-bold px-5 py-3 rounded-lg shadow-glow-strong text-sm fade-in z-50"></div>
+  <div id="toast" class="toast hidden"></div>
 
-  <footer class="mt-12 pt-8 border-t border-arsenal-border text-arsenal-muted text-xs text-center">
-    <p>Seus dados ficam apenas no seu navegador. Nenhuma informação é enviada a servidores.</p>
-    <p class="mt-1">A chave PIX deve ser preenchida manualmente no Word após gerar a proposta.</p>
+  <footer>
+    <p>Seus dados ficam apenas no seu navegador. Nenhuma informacao e enviada a servidores.</p>
+    <p>A chave PIX deve ser preenchida manualmente no Word apos gerar a proposta.</p>
   </footer>
 </div>
 
 <script>
 // =========================================================================
-// LÓGICA DE CÁLCULO
+// LOGICA DE CALCULO
 // =========================================================================
 
 function valorBase(qtdCalculos) {
@@ -496,26 +929,25 @@ function calcular(inputs) {
   const anos = Number(inputs.anos_contrato) || 0;
 
   const itens = [
-    { label: "Valor base dos cálculos", valor: base, sempre: true },
-    { label: "+10 nomeações (70% do base)",
+    { label: "Valor base dos calculos", valor: base, sempre: true },
+    { label: "+10 nomeacoes (70% do base)",
       valor: inputs.mais_de_10_nomeacoes ? base * 0.7 : 0 },
-    { label: "Urgência ≤ 2 dias úteis (50% do base)",
+    { label: "Urgencia (50% do base)",
       valor: inputs.urgente ? base * 0.5 : 0 },
-    { label: "Maior remuneração (TRCT)",
+    { label: "Maior remuneracao (TRCT)",
       valor: faixaRemuneracao(inputs.maior_remuneracao, base) },
-    // Verbas indenizatórias: não altera valor — só aparece no breakdown como "incluído"
-    { label: "Verbas indenizatórias e rescisórias",
+    { label: "Verbas indenizatorias e rescisorias",
       valor: 0,
       incluido: !!inputs.verbas_indenizatorias },
-    { label: "Apuração de verbas (20% do base)",
+    { label: "Apuracao de verbas (20% do base)",
       valor: inputs.apuracao_verbas ? base * 0.2 : 0 },
     { label: "Horas extras (50% do base)",
       valor: inputs.horas_extras ? base * 0.5 : 0 },
-    { label: "Pensionamento vitalício (50% do base)",
+    { label: "Pensionamento vitalicio (50% do base)",
       valor: inputs.pensionamento_vitalicio ? base * 0.5 : 0 },
-    { label: "Digitação de cartões de ponto",
+    { label: "Digitacao de cartoes de ponto",
       valor: inputs.digitacao_cartoes_ponto ? (base / 5) * anos : 0 },
-    { label: "Digitação de contracheques",
+    { label: "Digitacao de contracheques",
       valor: inputs.digitacao_contracheques ? (base / 10) * anos : 0 },
   ];
 
@@ -533,7 +965,6 @@ const fmtDataExtenso = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month:
 
 const $ = (id) => document.getElementById(id);
 
-// Parser robusto BR — aceita "2940", "2940,00", "2.940,00", "2,940.00", "R$ 2.940,00"
 function parseValorBR(str) {
   if (str === null || str === undefined) return null;
   let s = String(str).trim().replace(/[^\d,\.\-]/g, '');
@@ -541,10 +972,8 @@ function parseValorBR(str) {
   const ultVirg = s.lastIndexOf(',');
   const ultPonto = s.lastIndexOf('.');
   if (ultVirg > -1 && ultVirg > ultPonto) {
-    // Decimal é vírgula (formato BR): pontos são milhar
     s = s.replace(/\./g, '').replace(',', '.');
   } else if (ultPonto > -1 && ultPonto > ultVirg) {
-    // Decimal é ponto (formato US): vírgulas são milhar
     s = s.replace(/,/g, '');
   }
   const v = parseFloat(s);
@@ -603,25 +1032,25 @@ function atualizarResumo() {
   const html = itens.map(i => {
     if (i.incluido === true) {
       return `
-        <div class="flex justify-between items-baseline text-arsenal-cyan-dim">
-          <span class="text-xs uppercase tracking-wide">${i.label}</span>
-          <span class="font-medium text-xs italic">incluído</span>
+        <div class="row included">
+          <span class="label">${i.label}</span>
+          <span class="val">incluido</span>
         </div>`;
     }
     if (i.incluido === false) {
       return `
-        <div class="flex justify-between items-baseline text-arsenal-muted">
-          <span class="text-xs uppercase tracking-wide">${i.label}</span>
-          <span class="font-medium">—</span>
+        <div class="row zero">
+          <span class="label">${i.label}</span>
+          <span class="val">.</span>
         </div>`;
     }
     const zerado = i.valor === 0;
-    const cor = zerado ? 'text-arsenal-muted' : 'text-arsenal-text';
-    const valorFmt = zerado ? '—' : fmtBRL.format(i.valor);
+    const cls = zerado ? 'row zero' : 'row';
+    const valorFmt = zerado ? '.' : fmtBRL.format(i.valor);
     return `
-      <div class="flex justify-between items-baseline ${cor}">
-        <span class="text-xs uppercase tracking-wide">${i.label}</span>
-        <span class="font-medium">${valorFmt}</span>
+      <div class="${cls}">
+        <span class="label">${i.label}</span>
+        <span class="val">${valorFmt}</span>
       </div>`;
   }).join('');
   $('breakdown').innerHTML = html;
@@ -635,11 +1064,6 @@ function atualizarResumo() {
     $('aviso-override').classList.add('hidden');
   }
   $('total-display').textContent = fmtBRL.format(totalExibir);
-
-  document.querySelectorAll('.toggle-label').forEach(span => {
-    const cb = span.closest('label').querySelector('input[type="checkbox"]');
-    if (cb) span.textContent = cb.checked ? 'Sim' : 'Não';
-  });
 
   validarFormulario();
 }
@@ -673,15 +1097,15 @@ const KEY_HIST = 'arsenal_historico_v1';
 function salvarCalculista() {
   const dados = lerInputsCalculista();
   if (!dados.nome_calculista || !dados.documento_calculista) {
-    showToast('Preencha nome e documento antes de salvar.', 'warning');
+    showToast('Preencha nome e documento antes de salvar.', 'warn');
     return;
   }
   try {
     localStorage.setItem(KEY_CALC, JSON.stringify(dados));
-    showToast('✓ Dados do calculista salvos no navegador');
+    showToast('Dados do calculista salvos no navegador.');
     recolherCalculista();
   } catch (e) {
-    showToast('Não consegui salvar (localStorage bloqueado).', 'warning');
+    showToast('Nao consegui salvar (localStorage bloqueado).', 'warn');
   }
 }
 
@@ -701,13 +1125,11 @@ function recolherCalculista() {
   $('calc-resumo-nome').textContent = nome;
   $('calculista-expanded').classList.add('hidden');
   $('calculista-collapsed').classList.remove('hidden');
-  $('calculista-collapsed').classList.add('flex');
 }
 
 function expandirCalculista() {
   $('calculista-expanded').classList.remove('hidden');
   $('calculista-collapsed').classList.add('hidden');
-  $('calculista-collapsed').classList.remove('flex');
 }
 
 function salvarNoHistorico(dadosCompletos, valorFinal) {
@@ -738,16 +1160,16 @@ function renderHistorico() {
     if (raw) hist = JSON.parse(raw);
   } catch (e) { hist = []; }
   if (hist.length === 0) {
-    $('historico-lista').innerHTML = '<div class="text-arsenal-muted text-xs italic">Nenhuma proposta gerada ainda.</div>';
+    $('historico-lista').innerHTML = '<div class="history-empty">Nenhuma proposta gerada ainda.</div>';
     return;
   }
   $('historico-lista').innerHTML = hist.map((h, idx) => `
-    <button data-idx="${idx}" class="hist-item w-full text-left bg-arsenal-surface2 hover:bg-arsenal-border border border-arsenal-border hover:border-arsenal-cyan/40 rounded-lg p-3 transition">
-      <div class="flex justify-between items-baseline">
-        <div class="text-arsenal-muted text-xs">${h.data_str}</div>
-        <div class="text-arsenal-cyan font-bold tabular-nums text-sm">${fmtBRL.format(h.valor)}</div>
+    <button data-idx="${idx}" class="hist-item history-item">
+      <div class="top">
+        <span class="date">${h.data_str}</span>
+        <span class="val">${fmtBRL.format(h.valor)}</span>
       </div>
-      <div class="text-arsenal-text text-sm mt-1 truncate">${h.reclamante || '—'} <span class="text-arsenal-muted">vs</span> ${h.reclamada || '—'}</div>
+      <div class="parties">${h.reclamante || '.'} <span class="vs">vs</span> ${h.reclamada || '.'}</div>
     </button>
   `).join('');
   document.querySelectorAll('.hist-item').forEach(btn => {
@@ -756,7 +1178,7 @@ function renderHistorico() {
       const item = hist[idx];
       if (item && item.dados_completos) {
         repopularDoHistorico(item.dados_completos);
-        showToast('✓ Dados carregados do histórico');
+        showToast('Dados carregados do historico.');
       }
     });
   });
@@ -773,7 +1195,7 @@ function repopularDoHistorico(dados) {
 }
 
 // =========================================================================
-// LINK COMPARTILHÁVEL
+// LINK COMPARTILHAVEL
 // =========================================================================
 
 function gerarLink() {
@@ -783,7 +1205,7 @@ function gerarLink() {
   const url = `${location.origin}${location.pathname}?d=${b64}`;
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(url).then(
-      () => showToast('🔗 Link copiado'),
+      () => showToast('Link copiado.'),
       () => prompt('Copie o link manualmente:', url)
     );
   } else {
@@ -809,40 +1231,37 @@ function carregarDeURL() {
 // =========================================================================
 
 async function carregarBufferTemplate() {
-  // Modo standalone: usa base64 embutido se a constante existir
   if (typeof TEMPLATE_DOCX_BASE64 !== 'undefined') {
     const binaryString = atob(TEMPLATE_DOCX_BASE64);
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
     return bytes;
   }
-  // Modo produção: faz fetch do template.docx ao lado do index.html
   const response = await fetch('template.docx');
   if (!response.ok) {
-    throw new Error('Não consegui carregar o template.docx (HTTP ' + response.status + ')');
+    throw new Error('Nao consegui carregar o template.docx (HTTP ' + response.status + ')');
   }
   const buffer = await response.arrayBuffer();
   return new Uint8Array(buffer);
 }
 
 // =========================================================================
-// GERAÇÃO DO .DOCX
+// GERACAO DO .DOCX
 // =========================================================================
 
 async function gerarDocx() {
   $('erro-geracao').classList.add('hidden');
 
-  // Verificar libs
   if (typeof PizZip === 'undefined') {
-    mostrarErro('Biblioteca PizZip não carregou. Verifique sua conexão com a internet (precisa de internet só pra primeiro carregamento).');
+    mostrarErro('Biblioteca PizZip nao carregou. Verifique sua conexao.');
     return;
   }
   if (typeof docxtemplater === 'undefined') {
-    mostrarErro('Biblioteca docxtemplater não carregou. Verifique sua conexão com a internet.');
+    mostrarErro('Biblioteca docxtemplater nao carregou. Verifique sua conexao.');
     return;
   }
   if (typeof saveAs === 'undefined') {
-    mostrarErro('Biblioteca FileSaver não carregou. Verifique sua conexão com a internet.');
+    mostrarErro('Biblioteca FileSaver nao carregou. Verifique sua conexao.');
     return;
   }
 
@@ -850,7 +1269,6 @@ async function gerarDocx() {
   const { total } = calcular(inputs);
   const valorFinal = valorOverride !== null ? valorOverride : total;
 
-  // Data por extenso
   let dataExtenso = '';
   if (inputs.data_proposta) {
     const [ano, mes, dia] = inputs.data_proposta.split('-').map(Number);
@@ -888,12 +1306,12 @@ async function gerarDocx() {
     const filename = `Proposta - ${inputs.reclamante} vs ${inputs.reclamada}.docx`;
     saveAs(blob, filename);
     salvarNoHistorico(inputs, valorFinal);
-    showToast('✓ Proposta gerada — valor: ' + fmtBRL.format(valorFinal));
+    showToast('Proposta gerada. Valor: ' + fmtBRL.format(valorFinal));
   } catch (err) {
     console.error('Erro ao gerar:', err);
     let msg = err.message || String(err);
     if (err.properties && err.properties.errors) {
-      msg += '\n— ' + err.properties.errors.map(e => e.message).join('\n— ');
+      msg += ' / ' + err.properties.errors.map(e => e.message).join(' / ');
     }
     mostrarErro('Erro ao gerar: ' + msg);
   }
@@ -909,17 +1327,12 @@ function mostrarErro(msg) {
 // TOAST
 // =========================================================================
 
-function showToast(msg, tipo = 'success') {
+function showToast(msg, tipo) {
   const t = $('toast');
   t.textContent = msg;
   t.classList.remove('hidden');
-  if (tipo === 'warning') {
-    t.classList.remove('bg-arsenal-cyan', 'text-arsenal-bg');
-    t.classList.add('bg-arsenal-warning', 'text-arsenal-bg');
-  } else {
-    t.classList.add('bg-arsenal-cyan', 'text-arsenal-bg');
-    t.classList.remove('bg-arsenal-warning');
-  }
+  if (tipo === 'warn') t.classList.add('warn');
+  else t.classList.remove('warn');
   clearTimeout(t._timer);
   t._timer = setTimeout(() => t.classList.add('hidden'), 3500);
 }
@@ -929,29 +1342,24 @@ function showToast(msg, tipo = 'success') {
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Data padrão
   const hoje = new Date();
   $('data_proposta').value = hoje.toISOString().split('T')[0];
 
-  // Carregar dados
   carregarCalculista();
   carregarDeURL();
   renderHistorico();
 
-  // Recalcular em qualquer mudança (exceto valor_override que tem listener próprio)
   document.querySelectorAll('input, select').forEach(el => {
     if (el.id === 'valor_override') return;
     el.addEventListener('input', atualizarResumo);
     el.addEventListener('change', atualizarResumo);
   });
 
-  // Botões
   $('btn-salvar-calculista').addEventListener('click', salvarCalculista);
   $('btn-editar-calculista').addEventListener('click', expandirCalculista);
   $('btn-gerar').addEventListener('click', gerarDocx);
   $('btn-copiar-link').addEventListener('click', gerarLink);
 
-  // Override manual
   $('btn-toggle-override').addEventListener('click', () => {
     const sec = $('override-section');
     if (sec.classList.contains('hidden')) {
@@ -976,7 +1384,6 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarResumo();
   });
   $('valor_override').addEventListener('blur', (e) => {
-    // Reformatar quando perde foco, se valor válido
     const v = parseValorBR(e.target.value);
     if (v !== null) e.target.value = fmtBRLNum.format(v);
   });
@@ -988,7 +1395,6 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarResumo();
   });
 
-  // Tooltips: suporte a click pra mobile
   document.querySelectorAll('.tooltip-trigger').forEach(t => {
     t.addEventListener('click', (e) => {
       e.preventDefault();

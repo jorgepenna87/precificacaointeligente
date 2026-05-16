@@ -71,8 +71,8 @@ Cole o iframe abaixo (substituindo a URL pela sua do GitHub Pages) na página do
 
 ## Stack técnica
 
-- HTML/CSS/JavaScript vanilla (sem build)
-- [Tailwind CSS](https://tailwindcss.com) via CDN (com configuração inline customizada — paleta `arsenal-*`)
-- Google Fonts: **Space Grotesk** (display) + **Inter** (body)
+- HTML/CSS/JavaScript vanilla (sem build, sem framework de CSS)
+- CSS custom com paleta OKLCH (hue 215, azul oceano) e tipografia Inter
+- Google Fonts: Inter (400/500/600/700)
 - [PizZip](https://github.com/open-xmlformats/pizzip) + [docxtemplater](https://docxtemplater.com) — geração do .docx no navegador
 - [FileSaver.js](https://github.com/eligrey/FileSaver.js) — download do arquivo
